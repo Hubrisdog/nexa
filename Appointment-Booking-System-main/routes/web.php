@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\BillingController;
 use App\Http\Controllers\Admin\AiController;
 use App\Http\Controllers\Admin\DemoController;
 use App\Http\Controllers\Admin\GlobalSearchController;
+use App\Http\Controllers\Admin\OAuthController;
 use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\PublicBookingController;
 use Illuminate\Support\Facades\Route;
@@ -29,7 +30,12 @@ Route::post('/api/register', [AuthController::class, 'register']);
 // Public Booking API Routes
 Route::get('/api/public/booking/{username}', [PublicBookingController::class, 'getProvider']);
 Route::get('/api/public/booking/{username}/slots', [PublicBookingController::class, 'getAvailableSlots']);
-Route::post('/api/public/book', [PublicBookingController::class, 'bookSlot']);
+Route::post('/api/public/book', [PublicBookingController::class, 'bookSlot'])->middleware('tenant.limit');
+Route::get('/api/public/appointments/{appointment}/ics', [PublicBookingController::class, 'downloadIcs']);
+Route::get('/api/public/workspace', [PublicBookingController::class, 'getWorkspace']);
+
+// OAuth API Callback Routes
+Route::get('/api/oauth/google/callback', [OAuthController::class, 'googleCallback'])->name('oauth.google.callback');
 
 // Protected API Routes (Requires web session authentication)
 Route::middleware('auth')->group(function () {
@@ -43,15 +49,21 @@ Route::middleware('auth')->group(function () {
     Route::get('/api/dashboard-stats', [DashboardController::class, 'stats']);
 
     // User Management CRUD
-    Route::apiResource('/api/users', UserController::class);
+    Route::apiResource('/api/users', UserController::class)->middleware('tenant.limit');
 
     // Appointment Scheduling CRUD
-    Route::apiResource('/api/appointments', AppointmentController::class);
+    Route::apiResource('/api/appointments', AppointmentController::class)->middleware('tenant.limit');
 
     // Settings
     Route::get('/api/settings', [SettingController::class, 'index']);
     Route::post('/api/settings', [SettingController::class, 'update']);
     Route::post('/api/availability', [SettingController::class, 'updateAvailability']);
+    Route::post('/api/settings/branding', [SettingController::class, 'updateBranding']);
+
+    // Calendar Integrations (OAuth)
+    Route::get('/api/oauth/google/redirect', [OAuthController::class, 'googleRedirect'])->name('oauth.google.redirect');
+    Route::get('/api/oauth/connections', [OAuthController::class, 'getConnections']);
+    Route::delete('/api/oauth/connections/{provider}', [OAuthController::class, 'disconnect']);
 
     // Profile
     Route::get('/api/profile', [ProfileController::class, 'show']);
@@ -80,7 +92,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/api/billing/subscribe', [BillingController::class, 'updateSubscription']);
 
     // AI Summarization Route
-    Route::post('/api/appointments/{appointment}/summarize', [AiController::class, 'summarize']);
+    Route::post('/api/appointments/{appointment}/summarize', [AiController::class, 'summarize'])->middleware('tenant.limit');
 
     // Demo Simulation Route
     Route::post('/api/demo/simulate', [DemoController::class, 'runSimulation']);

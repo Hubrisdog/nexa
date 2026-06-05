@@ -24,6 +24,7 @@ class CrmController extends Controller
             'stage' => ['required', Rule::in(['cold', 'contacted', 'interested', 'booked', 'closed_won', 'closed_lost'])]
         ]);
 
+        $oldStage = $deal->stage;
         $deal->update([
             'stage' => $fields['stage']
         ]);
@@ -36,6 +37,15 @@ class CrmController extends Controller
             'type' => 'note',
             'description' => "Deal '{$deal->title}' stage updated to: " . ucfirst($fields['stage'])
         ]);
+
+        // Audit Log
+        \App\Models\AuditLog::log(
+            'deal_stage_updated',
+            $deal,
+            ['stage' => $oldStage],
+            ['stage' => $fields['stage']],
+            "Moved deal '{$deal->title}' from " . ucfirst($oldStage) . " to " . ucfirst($fields['stage'])
+        );
 
         return response()->json($deal->load(['company', 'contact']));
     }
@@ -68,11 +78,29 @@ class CrmController extends Controller
             'description' => "New deal created: '{$deal->title}' with value $" . number_format($deal->value, 2)
         ]);
 
+        // Audit Log
+        \App\Models\AuditLog::log(
+            'deal_created',
+            $deal,
+            null,
+            $deal->only(['title', 'value', 'stage', 'score']),
+            "Created deal '{$deal->title}' valued at $" . number_format($deal->value, 2)
+        );
+
         return response()->json($deal->load(['company', 'contact']), 201);
     }
 
     public function destroyDeal(Deal $deal)
     {
+        // Audit Log
+        \App\Models\AuditLog::log(
+            'deal_deleted',
+            $deal,
+            $deal->only(['title', 'value', 'stage']),
+            null,
+            "Deleted deal '{$deal->title}'"
+        );
+
         $deal->delete();
         return response()->json(['message' => 'Deal deleted successfully.']);
     }

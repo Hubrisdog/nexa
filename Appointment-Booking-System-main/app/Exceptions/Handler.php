@@ -29,6 +29,22 @@ class Handler extends ExceptionHandler
     }
 
     /**
+     * Report or log an exception.
+     */
+    public function report(Throwable $e)
+    {
+        try {
+            $logPath = base_path('storage/logs/debug.log');
+            $message = "[" . date('Y-m-d H:i:s') . "] Exception: " . $e->getMessage() . "\n" . $e->getTraceAsString() . "\n\n";
+            file_put_contents($logPath, $message, FILE_APPEND);
+        } catch (Throwable $t) {
+            // Ignore logging failures
+        }
+
+        parent::report($e);
+    }
+
+    /**
      * Determine if the exception handler should return a JSON response.
      */
     protected function shouldReturnJson($request, Throwable $e)

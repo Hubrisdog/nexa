@@ -26,6 +26,21 @@ const errors = ref({});
 const tenant = ref(null);
 const isUpgrading = ref(false);
 
+// Calendar integrations
+const calendarConnections = ref([]);
+
+// Branding settings
+const brandingForm = ref({
+    name: '',
+    brand_color: '#4f46e5',
+    custom_domain: '',
+    custom_email_footer: '',
+    logo: null
+});
+const logoPreview = ref(null);
+const isSavingBranding = ref(false);
+const isBrandingSuccess = ref(false);
+
 const fetchSettings = async () => {
     try {
         const response = await axios.get('/api/settings');
@@ -47,8 +62,77 @@ const fetchBilling = async () => {
     try {
         const response = await axios.get('/api/billing/details');
         tenant.value = response.data;
+        if (tenant.value) {
+            brandingForm.value.name = tenant.value.name || '';
+            brandingForm.value.brand_color = tenant.value.brand_color || '#4f46e5';
+            brandingForm.value.custom_domain = tenant.value.custom_domain || '';
+            brandingForm.value.custom_email_footer = tenant.value.custom_email_footer || '';
+            if (tenant.value.logo_path) {
+                logoPreview.value = '/' + tenant.value.logo_path;
+            }
+        }
     } catch (error) {
         console.error("Error fetching billing details:", error);
+    }
+};
+
+const fetchConnections = async () => {
+    try {
+        const response = await axios.get('/api/oauth/connections');
+        calendarConnections.value = response.data;
+    } catch (error) {
+        console.error("Error fetching calendar connections:", error);
+    }
+};
+
+const disconnectCalendar = async (provider) => {
+    try {
+        await axios.delete(`/api/oauth/connections/${provider}`);
+        fetchConnections();
+    } catch (error) {
+        console.error("Error disconnecting calendar connection:", error);
+    }
+};
+
+const handleLogoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        brandingForm.value.logo = file;
+        logoPreview.value = URL.createObjectURL(file);
+    }
+};
+
+const saveBranding = async () => {
+    isSavingBranding.value = true;
+    isBrandingSuccess.value = false;
+    try {
+        const formData = new FormData();
+        formData.append('name', brandingForm.value.name);
+        formData.append('brand_color', brandingForm.value.brand_color);
+        formData.append('custom_domain', brandingForm.value.custom_domain || '');
+        formData.append('custom_email_footer', brandingForm.value.custom_email_footer || '');
+        if (brandingForm.value.logo) {
+            formData.append('logo', brandingForm.value.logo);
+        }
+
+        const response = await axios.post('/api/settings/branding', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+
+        tenant.value = response.data.tenant;
+        isBrandingSuccess.value = true;
+        
+        // Refresh general app branding
+        fetchSettings();
+        
+        setTimeout(() => {
+            isBrandingSuccess.value = false;
+        }, 3000);
+    } catch (error) {
+        console.error("Error saving branding settings:", error);
+        alert(error.response?.data?.message || 'Error saving branding settings.');
+    } finally {
+        isSavingBranding.value = false;
     }
 };
 
@@ -88,6 +172,15 @@ const handleSave = async () => {
 onMounted(() => {
     fetchSettings();
     fetchBilling();
+    fetchConnections();
+
+    // Check URL parameters for successful OAuth sync redirection
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('sync') === 'success') {
+        activeTab.value = 'calendar';
+        isSuccess.value = true;
+        setTimeout(() => { isSuccess.value = false; }, 3000);
+    }
 });
 </script>
 
@@ -115,16 +208,23 @@ onMounted(() => {
                             <span @click="activeTab = 'notifications'" class="tab-link" :class="{ 'active': activeTab === 'notifications' }">
                                 <i class="far fa-bell mr-2"></i> Email alerts
                             </span>
+                            <span @click="activeTab = 'calendar'" class="tab-link" :class="{ 'active': activeTab === 'calendar' }">
+                                <i class="far fa-calendar-alt mr-2"></i> Calendar Sync
+                            </span>
+                            <span @click="activeTab = 'branding'" class="tab-link" :class="{ 'active': activeTab === 'branding' }">
+                                <i class="fas fa-paint-brush mr-2"></i> Branding & Logo
+                            </span>
                             <span @click="activeTab = 'billing'" class="tab-link" :class="{ 'active': activeTab === 'billing' }">
                                 <i class="fas fa-credit-card mr-2"></i> Billing & Plan
                             </span>
                         </div>
 
                         <div v-if="isSuccess" class="alert alert-success mb-4" style="border-radius: 8px;">
-                            <i class="fas fa-check-circle mr-2"></i> System configurations saved successfully.
+                            <i class="fas fa-check-circle mr-2"></i> Settings saved successfully.
                         </div>
 
-                        <form @submit.prevent="handleSave">
+                        <!-- Tab Content Views -->
+                        <form @submit.prevent="handleSave" v-if="activeTab !== 'calendar' && activeTab !== 'branding'">
                             <!-- Tab: General -->
                             <div v-if="activeTab === 'general'" class="tab-body">
                                 <div class="form-group mb-3">
@@ -251,14 +351,137 @@ onMounted(() => {
                                 </div>
                             </div>
 
-                            <button v-if="activeTab !== 'billing'" type="submit" class="btn btn-gradient px-4" style="height: 44px; border-radius: 8px;" :disabled="isSubmitting">
+                            <button type="submit" class="btn btn-gradient px-4" style="height: 44px; border-radius: 8px;" :disabled="isSubmitting">
                                 <span v-if="isSubmitting"><i class="fas fa-spinner fa-spin mr-1"></i> Saving...</span>
                                 <span v-else>Save Settings</span>
                             </button>
                         </form>
+
+                        <!-- Tab: Calendar Sync -->
+                        <div v-if="activeTab === 'calendar'" class="tab-body py-2">
+                            <h6 class="font-weight-bold text-white mb-2" style="font-size: 15px;">Calendar Sync Connections</h6>
+                            <p class="text-secondary text-sm mb-4">Connect external accounts to automatically block busy slots and push synced invitations.</p>
+                            
+                            <div class="d-flex flex-column gap-3 mb-4">
+                                <!-- Google Calendar Row -->
+                                <div class="d-flex align-items-center justify-content-between p-3 rounded-lg border" style="background-color: var(--bg-dark-hover); border-color: var(--border-dark) !important; border-radius: 12px;">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="d-flex align-items-center justify-content-center text-blue" style="width: 44px; height: 44px; border-radius: 10px; font-size: 20px; background-color: rgba(59, 130, 246, 0.1); color: #3b82f6;">
+                                            <i class="fab fa-google"></i>
+                                        </div>
+                                        <div>
+                                            <span class="font-weight-bold d-block text-white text-sm">Google Calendar Sync</span>
+                                            <span v-if="calendarConnections.find(c => c.provider === 'google')" class="text-xs text-secondary d-block mt-0.5">
+                                                Connected as <span class="text-success font-weight-bold">{{ calendarConnections.find(c => c.provider === 'google').email }}</span>
+                                            </span>
+                                            <span v-else class="text-xs text-muted d-block mt-0.5">Not connected</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <button v-if="calendarConnections.find(c => c.provider === 'google')" type="button" @click="disconnectCalendar('google')" class="btn btn-sm btn-outline-danger px-3 py-1.5" style="border-radius: 8px; font-size: 12px; font-weight: 500;">
+                                            Disconnect
+                                        </button>
+                                        <a v-else href="/api/oauth/google/redirect" class="btn btn-sm btn-indigo px-3 py-1.5 text-white" style="border-radius: 8px; font-size: 12px; font-weight: 500; background-color: #4f46e5; border: 0; text-decoration: none;">
+                                            Connect Calendar
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <!-- Outlook Calendar Row -->
+                                <div class="d-flex align-items-center justify-content-between p-3 rounded-lg border opacity-50" style="background-color: var(--bg-dark-hover); border-color: var(--border-dark) !important; border-radius: 12px;">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="d-flex align-items-center justify-content-center text-orange" style="width: 44px; height: 44px; border-radius: 10px; font-size: 20px; background-color: rgba(249, 115, 22, 0.1); color: #f97316;">
+                                            <i class="fab fa-windows"></i>
+                                        </div>
+                                        <div>
+                                            <span class="font-weight-bold d-block text-white text-sm">Microsoft Outlook Calendar</span>
+                                            <span class="text-xs text-muted d-block mt-0.5">Available in Phase 3</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <button type="button" class="btn btn-sm btn-dark disabled px-3 py-1.5" style="border-radius: 8px; font-size: 12px;" disabled>
+                                            Coming Soon
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tab: Branding & Logo -->
+                        <div v-if="activeTab === 'branding'" class="tab-body py-2">
+                            <div v-if="isBrandingSuccess" class="alert alert-success mb-4" style="border-radius: 8px;">
+                                <i class="fas fa-check-circle mr-2"></i> Branding settings updated successfully.
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-7">
+                                    <div class="form-group mb-3">
+                                        <label class="form-label">Workspace Business Name</label>
+                                        <input v-model="brandingForm.name" type="text" class="form-control-modern w-100" placeholder="Acme Logistics V2" required>
+                                        <span class="input-label-subtitle">Sets the main white-labeled client-facing brand name.</span>
+                                    </div>
+
+                                    <div class="form-group mb-3">
+                                        <label class="form-label">Brand Highlight Color</label>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <input v-model="brandingForm.brand_color" type="color" class="form-control-color" style="width: 44px; height: 44px; border: 0; padding: 0; background: none; cursor: pointer; border-radius: 8px;">
+                                            <input v-model="brandingForm.brand_color" type="text" class="form-control-modern w-50" placeholder="#4f46e5" required>
+                                        </div>
+                                        <span class="input-label-subtitle">Theme color used for client-facing booking wizard highlights.</span>
+                                    </div>
+
+                                    <div class="form-group mb-3">
+                                        <label class="form-label">Custom White-Label Domain</label>
+                                        <input v-model="brandingForm.custom_domain" type="text" class="form-control-modern w-100" placeholder="book.acme.com">
+                                        <span class="input-label-subtitle">CNAME record maps this address to resolve client visits directly.</span>
+                                    </div>
+
+                                    <div class="form-group mb-4">
+                                        <label class="form-label">Email Signature Footer</label>
+                                        <textarea v-model="brandingForm.custom_email_footer" class="form-control-modern w-100" rows="3" placeholder="Thanks, Acme Automation team."></textarea>
+                                        <span class="input-label-subtitle">Custom sign-off footer text attached to all automated invitations.</span>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-5 d-flex flex-column align-items-center justify-content-center p-3 border-left" style="border-color: var(--border-dark) !important;">
+                                    <label class="form-label mb-3 text-center">Company Identity Logo</label>
+                                    <div class="logo-preview-box mb-3 border border-dashed d-flex align-items-center justify-content-center overflow-hidden" style="width: 140px; height: 140px; border-radius: 20px; border-color: var(--border-dark) !important; background-color: var(--bg-dark-hover);">
+                                        <img v-if="logoPreview" :src="logoPreview" class="img-fluid" style="max-height: 100%; object-fit: contain;">
+                                        <i v-else class="fas fa-image fa-3x text-secondary"></i>
+                                    </div>
+                                    <label class="btn btn-sm btn-dark border-secondary px-3 py-2" style="border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 500;">
+                                        <i class="fas fa-cloud-upload-alt mr-1"></i> Upload Image
+                                        <input type="file" @change="handleLogoUpload" accept="image/*" class="d-none">
+                                    </label>
+                                    <span class="text-xs text-muted mt-2 text-center">Max size: 2MB. Accepts PNG, JPG.</span>
+                                </div>
+                            </div>
+
+                            <button type="button" @click="saveBranding" class="btn btn-gradient px-4 mt-3" style="height: 44px; border-radius: 8px;" :disabled="isSavingBranding">
+                                <span v-if="isSavingBranding"><i class="fas fa-spinner fa-spin mr-1"></i> Saving...</span>
+                                <span v-else>Save Branding Details</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </template>
+
+<style scoped>
+.gap-3 { gap: 12px; }
+.form-control-color {
+    border: 1px solid var(--border-dark);
+    border-radius: 8px;
+    height: 44px;
+    width: 44px;
+    background-color: var(--bg-dark-hover);
+}
+.opacity-50 {
+    opacity: 0.5;
+}
+.border-left {
+    border-left: 1px solid var(--border-dark) !important;
+}
+</style>

@@ -437,6 +437,8 @@ const getStatusClass = (status) => {
                                 No data available to plot.
                             </div>
                         </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

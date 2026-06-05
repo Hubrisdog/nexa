@@ -11,7 +11,7 @@
 
             <!-- Step 1: Branding Welcome -->
             <div v-if="step === 1" class="animate-fade-in">
-                <h4 class="font-weight-extrabold text-white mb-2">Welcome to Nexa Calmendar!</h4>
+                <h4 class="font-weight-extrabold text-white mb-2">Welcome to Nexa!</h4>
                 <p class="text-secondary text-sm mb-4">Let's configure your scheduling portal branding in under 2 minutes.</p>
                 
                 <div class="form-group mb-4">
@@ -31,7 +31,7 @@
             </div>
 
             <!-- Step 2: Working Hours -->
-            <div v-slot:step2 v-else-if="step === 2" class="animate-fade-in">
+            <div v-else-if="step === 2" class="animate-fade-in">
                 <h4 class="font-weight-extrabold text-white mb-2">Configure Availability</h4>
                 <p class="text-secondary text-sm mb-4">Define your standard workdays and hours. Nexa will use these to generate public timeslots.</p>
                 
@@ -219,7 +219,7 @@ export default {
 
                 await axios.post('/api/availability', {
                     working_hours: workingHours,
-                    breaks: [['start' => '12:00', 'end' => '13:00']],
+                    breaks: [{ start: '12:00', end: '13:00' }],
                     buffer_time: 15,
                     timezone: this.form.timezone
                 });

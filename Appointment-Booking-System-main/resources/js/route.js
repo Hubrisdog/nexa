@@ -11,10 +11,31 @@ import PublicBook from "./pages/booking/PublicBook.vue";
 import { createRouter, createWebHistory } from "vue-router";
 import axios from "axios";
 
+const isWorkspaceDomain = () => {
+    const host = window.location.hostname;
+    const parts = host.split('.');
+    
+    if (host.endsWith('localhost') || host.includes('127.0.0.1')) {
+        return parts.length > 1 && parts[0] !== '127' && parts[0] !== 'localhost';
+    }
+    
+    if (parts.length >= 3) {
+        return !['www', 'app', 'api'].includes(parts[0]);
+    }
+    
+    if (parts.length >= 2 && !host.endsWith('nexa.co') && !host.endsWith('nexa.com')) {
+        return true;
+    }
+    
+    return false;
+};
+
 const routes = [
     {
         path: '/',
-        redirect: '/admin/dashboard'
+        name: 'workspace.root',
+        component: PublicBook,
+        meta: { guest: false, auth: false }
     },
     {
         path: '/book/:username',
@@ -91,6 +112,13 @@ router.beforeEach((to, from, next) => {
         try {
             user = JSON.parse(userStr);
         } catch (e) {}
+    }
+
+    if (to.path === '/') {
+        if (!isWorkspaceDomain()) {
+            next({ name: 'admin.dashboard' });
+            return;
+        }
     }
 
     if (to.matched.some(record => record.meta.auth)) {

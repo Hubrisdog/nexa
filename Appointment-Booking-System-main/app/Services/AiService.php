@@ -27,23 +27,48 @@ class AiService
             // Algorithmic fallback score
             $score = 50; // base score
 
-            if ($deal->value > 50000) $score += 15;
-            elseif ($deal->value > 10000) $score += 10;
+            $valAdd = 0;
+            if ($deal->value > 50000) {
+                $valAdd = 15;
+            } elseif ($deal->value > 10000) {
+                $valAdd = 10;
+            }
+            $score += $valAdd;
 
+            $empAdd = 0;
+            $companyAttribs = 0;
             if ($deal->company) {
-                if ($deal->company->employee_count > 100) $score += 15;
-                elseif ($deal->company->employee_count > 20) $score += 10;
+                if ($deal->company->employee_count > 100) {
+                    $empAdd = 15;
+                } elseif ($deal->company->employee_count > 20) {
+                    $empAdd = 10;
+                }
                 
-                if ($deal->company->industry) $score += 5;
-                if ($deal->company->website) $score += 5;
+                if ($deal->company->industry) $companyAttribs += 5;
+                if ($deal->company->website) $companyAttribs += 5;
             }
+            $score += ($empAdd + $companyAttribs);
 
+            $contactAttribs = 0;
             if ($deal->contact) {
-                if ($deal->contact->linkedin_url) $score += 5;
-                if ($deal->contact->email) $score += 5;
+                if ($deal->contact->linkedin_url) $contactAttribs += 5;
+                if ($deal->contact->email) $contactAttribs += 5;
             }
+            $score += $contactAttribs;
 
-            return min(100, $score);
+            $finalScore = min(100, $score);
+
+            Log::info("--- Lead Scoring Engine Evaluation Breakdown ---\n" .
+                     "Deal: {$deal->title}\n" .
+                     "Base Score: 50\n" .
+                     "Value Weight Addition: +{$valAdd}\n" .
+                     "Company Size Addition: +{$empAdd}\n" .
+                     "Company Metadata Addition: +{$companyAttribs}\n" .
+                     "Contact Metadata Addition: +{$contactAttribs}\n" .
+                     "Calculated Lead Score: {$finalScore}%\n" .
+                     "-------------------------------------------------");
+
+            return $finalScore;
         }
 
         try {

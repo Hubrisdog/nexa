@@ -26,19 +26,43 @@ trait BelongsToTenant
         });
     }
 
+    protected static $resolving = false;
+
     /**
      * Resolves the active Tenant ID.
      */
     protected static function resolveTenantId()
     {
-        // 1. Resolve from authenticated user
-        if (Auth::check() && Auth::user()->tenant_id) {
-            return Auth::user()->tenant_id;
+        if (static::$resolving) {
+            return null;
+        }
+
+        static::$resolving = true;
+        $tenantId = null;
+
+        try {
+            if (Auth::hasUser()) {
+                $tenantId = Auth::user()->tenant_id;
+            } elseif (Auth::check()) {
+                $tenantId = Auth::user()->tenant_id;
+            }
+        } catch (\Throwable $e) {
+            // Ignore auth lookup errors during boot
+        }
+
+        static::$resolving = false;
+
+        if ($tenantId !== null) {
+            return $tenantId;
         }
 
         // 2. Resolve from session if set
-        if (session()->has('tenant_id')) {
-            return session('tenant_id');
+        try {
+            if (session() && session()->has('tenant_id')) {
+                return session('tenant_id');
+            }
+        } catch (\Throwable $e) {
+            // Ignore session lookup errors
         }
 
         return null;

@@ -91,12 +91,24 @@ class AppointmentController extends Controller
         $appointment = Appointment::create($fields);
         $appointment->load(['client', 'staff']);
 
+        // Audit Log
+        \App\Models\AuditLog::log(
+            'appointment_created',
+            $appointment,
+            null,
+            $appointment->only(['title', 'start_time', 'end_time', 'status']),
+            "Scheduled appointment '{$appointment->title}' with {$appointment->staff->name} for {$appointment->client->name}"
+        );
+
         if (in_array($appointment->calendar_provider, ['google', 'outlook'])) {
             SyncCalendarJob::dispatch($appointment, 'create');
         }
 
         // Trigger sequence notifications & reminders
         $sequenceService->triggerAppointmentSequences($appointment);
+
+        // Send transactional email
+        resolve(\App\Services\MailService::class)->sendBookingConfirmation($appointment);
 
         \Log::info("SMS/Email Confirmation Dispatched: Appointment #{$appointment->id} ('{$appointment->title}') scheduled for client {$appointment->client->name} with provider {$appointment->staff->name} on {$appointment->start_time}.");
 
@@ -155,12 +167,43 @@ class AppointmentController extends Controller
             ], 422);
         }
 
+        $oldValues = $appointment->only(['title', 'start_time', 'end_time', 'status']);
         $oldProvider = $appointment->calendar_provider;
         $oldGoogleId = $appointment->google_event_id;
         $oldOutlookId = $appointment->outlook_event_id;
 
         $appointment->update($fields);
         $appointment->load(['client', 'staff']);
+        $newValues = $appointment->only(['title', 'start_time', 'end_time', 'status']);
+
+        // Check for specific event type and description
+        $event = 'appointment_updated';
+        $desc = "Updated appointment '{$appointment->title}' details";
+        if ($oldValues['start_time'] !== $newValues['start_time'] || $oldValues['end_time'] !== $newValues['end_time']) {
+            $event = 'appointment_rescheduled';
+            $desc = "Rescheduled appointment '{$appointment->title}' from " . 
+                \Carbon\Carbon::parse($oldValues['start_time'])->format('M d, g:i A') . " to " . 
+                \Carbon\Carbon::parse($newValues['start_time'])->format('M d, g:i A');
+        } elseif ($oldValues['status'] !== $newValues['status']) {
+            $event = 'appointment_status_changed';
+            $desc = "Changed appointment '{$appointment->title}' status from '{$oldValues['status']}' to '{$newValues['status']}'";
+        }
+
+        // Audit Log
+        \App\Models\AuditLog::log(
+            $event,
+            $appointment,
+            $oldValues,
+            $newValues,
+            $desc
+        );
+
+        // Send transactional emails
+        if ($event === 'appointment_rescheduled') {
+            resolve(\App\Services\MailService::class)->sendReschedule($appointment, $oldValues['start_time']);
+        } elseif ($newValues['status'] === 'cancelled' && $oldValues['status'] !== 'cancelled') {
+            resolve(\App\Services\MailService::class)->sendCancellation($appointment);
+        }
 
         if ($oldProvider !== $appointment->calendar_provider) {
             // Delete old event
@@ -202,6 +245,18 @@ class AppointmentController extends Controller
         if ($user->role === 'staff' && $appointment->staff_id !== $user->id) {
             return response()->json(['message' => 'Unauthorized.'], 403);
         }
+
+        // Audit Log
+        \App\Models\AuditLog::log(
+            'appointment_deleted',
+            $appointment,
+            $appointment->only(['title', 'start_time', 'end_time', 'status']),
+            null,
+            "Deleted appointment '{$appointment->title}' scheduled on " . \Carbon\Carbon::parse($appointment->start_time)->format('M d, g:i A')
+        );
+
+        // Send transactional cancellation email
+        resolve(\App\Services\MailService::class)->sendCancellation($appointment);
 
         if (in_array($appointment->calendar_provider, ['google', 'outlook'])) {
             SyncCalendarJob::dispatch([

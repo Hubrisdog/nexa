@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Appointment;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 
 class AvailabilityService
 {
@@ -26,22 +27,30 @@ class AvailabilityService
         // Fetch availability settings
         $availability = $provider->availability;
         if (!$availability) {
+            $availability = $provider->availability()->first();
+        }
+        if (!$availability) {
             // If no settings exist, default to a standard 9-5 schedule.
-            $availability = $provider->availability()->create([
-                'working_hours' => [
-                    'monday' => ['start' => '09:00', 'end' => '17:00'],
-                    'tuesday' => ['start' => '09:00', 'end' => '17:00'],
-                    'wednesday' => ['start' => '09:00', 'end' => '17:00'],
-                    'thursday' => ['start' => '09:00', 'end' => '17:00'],
-                    'friday' => ['start' => '09:00', 'end' => '17:00'],
-                ],
-                'breaks' => [
-                    ['start' => '12:00', 'end' => '13:00']
-                ],
-                'holidays' => [],
-                'buffer_time' => 15,
-                'timezone' => 'UTC',
-            ]);
+            $availability = \App\Models\Availability::updateOrCreate(
+                ['user_id' => $provider->id],
+                [
+                    'working_hours' => [
+                        'monday' => ['start' => '09:00', 'end' => '17:00'],
+                        'tuesday' => ['start' => '09:00', 'end' => '17:00'],
+                        'wednesday' => ['start' => '09:00', 'end' => '17:00'],
+                        'thursday' => ['start' => '09:00', 'end' => '17:00'],
+                        'friday' => ['start' => '09:00', 'end' => '17:00'],
+                    ],
+                    'breaks' => [
+                        ['start' => '12:00', 'end' => '13:00']
+                    ],
+                    'holidays' => [],
+                    'buffer_time' => 15,
+                    'timezone' => 'UTC',
+                    'tenant_id' => $provider->tenant_id,
+                ]
+            );
+            $provider->setRelation('availability', $availability);
         }
 
         $timezone = $availability->timezone ?? 'UTC';
@@ -121,9 +130,83 @@ class AvailabilityService
             }
         }
 
+        // 5. Check external Google Calendar events
+        $connection = $provider->calendarConnections()->where('provider', 'google')->first();
+        if ($connection) {
+            $googleService = resolve(GoogleCalendarService::class);
+            if ($this->checkExternalGoogleConflicts($connection, $googleService, $start, $end)) {
+                return [
+                    'available' => false,
+                    'reason' => 'Conflicts with an event on your external Google Calendar.'
+                ];
+            }
+        }
+
         return [
             'available' => true,
             'reason' => null
         ];
+    }
+
+    /**
+     * Checks Google Calendar API for overlapping busy events.
+     */
+    protected function checkExternalGoogleConflicts($connection, $googleService, $start, $end): bool
+    {
+        if (str_starts_with($connection->access_token, 'mock-')) {
+            // Simulated conflict for 13:00 (1:00 PM) to facilitate local testing
+            if ($start->hour === 13) {
+                Log::info("Availability check mock calendar conflict triggered for 13:00.");
+                return true;
+            }
+            return false;
+        }
+
+        $accessToken = $googleService->getValidAccessToken($connection);
+        if (!$accessToken) {
+            return false;
+        }
+
+        $calendarId = $connection->calendar_id ?? 'primary';
+
+        try {
+            // Check events within a 2-hour window centered around the requested slot
+            $timeMin = $start->copy()->subHour()->toRfc3339String();
+            $timeMax = $end->copy()->addHour()->toRfc3339String();
+
+            $response = Http::withToken($accessToken)->get("https://www.googleapis.com/calendar/v3/calendars/{$calendarId}/events", [
+                'timeMin' => $timeMin,
+                'timeMax' => $timeMax,
+                'singleEvents' => 'true',
+            ]);
+
+            if ($response->successful()) {
+                $events = $response->json()['items'] ?? [];
+                foreach ($events as $event) {
+                    if (isset($event['transparency']) && $event['transparency'] === 'transparent') {
+                        continue;
+                    }
+
+                    $eventStartStr = $event['start']['dateTime'] ?? $event['start']['date'] ?? null;
+                    $eventEndStr = $event['end']['dateTime'] ?? $event['end']['date'] ?? null;
+
+                    if ($eventStartStr && $eventEndStr) {
+                        $eventStart = Carbon::parse($eventStartStr);
+                        $eventEnd = Carbon::parse($eventEndStr);
+
+                        if ($start->lt($eventEnd) && $end->gt($eventStart)) {
+                            Log::info("External Google Calendar conflict detected with event: " . ($event['summary'] ?? 'Unnamed'));
+                            return true;
+                        }
+                    }
+                }
+            } else {
+                Log::error("Google Calendar freebusy search failed: " . $response->body());
+            }
+        } catch (\Exception $e) {
+            Log::error("Google Calendar conflict check exception: " . $e->getMessage());
+        }
+
+        return false;
     }
 }

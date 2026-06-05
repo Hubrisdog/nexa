@@ -35,27 +35,38 @@ class PublicBookingController extends Controller
             return response()->json(['message' => 'Provider not found.'], 404);
         }
 
+        // Log booking link visit
+        $setting = \App\Models\Setting::firstOrCreate(
+            ['key' => 'booking_link_visits', 'tenant_id' => $provider->tenant_id],
+            ['value' => '0']
+        );
+        $setting->update(['value' => (string)(intval($setting->value) + 1)]);
+
         // Fetch or create default availability
         $availability = $provider->availability;
         if (!$availability) {
-            $availability = $provider->availability()->create([
-                'working_hours' => [
-                    'monday' => ['start' => '09:00', 'end' => '17:00'],
-                    'tuesday' => ['start' => '09:00', 'end' => '17:00'],
-                    'wednesday' => ['start' => '09:00', 'end' => '17:00'],
-                    'thursday' => ['start' => '09:00', 'end' => '17:00'],
-                    'friday' => ['start' => '09:00', 'end' => '17:00'],
-                ],
-                'breaks' => [
-                    ['start' => '12:00', 'end' => '13:00']
-                ],
-                'holidays' => [],
-                'buffer_time' => 15,
-                'timezone' => 'UTC',
-                'tenant_id' => $provider->tenant_id,
-            ]);
+            $availability = \App\Models\Availability::updateOrCreate(
+                ['user_id' => $provider->id],
+                [
+                    'working_hours' => [
+                        'monday' => ['start' => '09:00', 'end' => '17:00'],
+                        'tuesday' => ['start' => '09:00', 'end' => '17:00'],
+                        'wednesday' => ['start' => '09:00', 'end' => '17:00'],
+                        'thursday' => ['start' => '09:00', 'end' => '17:00'],
+                        'friday' => ['start' => '09:00', 'end' => '17:00'],
+                    ],
+                    'breaks' => [
+                        ['start' => '12:00', 'end' => '13:00']
+                    ],
+                    'holidays' => [],
+                    'buffer_time' => 15,
+                    'timezone' => 'UTC',
+                    'tenant_id' => $provider->tenant_id,
+                ]
+            );
         }
 
+        $tenant = $provider->tenant;
         return response()->json([
             'id' => $provider->id,
             'name' => $provider->name,
@@ -65,6 +76,41 @@ class PublicBookingController extends Controller
             'working_hours' => $availability->working_hours,
             'buffer_time' => $availability->buffer_time,
             'tenant_id' => $provider->tenant_id,
+            'tenant' => $tenant ? [
+                'name' => $tenant->name,
+                'logo_path' => $tenant->logo_path,
+                'brand_color' => $tenant->brand_color,
+            ] : null,
+        ]);
+    }
+
+    public function getWorkspace()
+    {
+        $tenantId = session('tenant_id');
+        if (!$tenantId) {
+            return response()->json(['message' => 'Workspace not found.'], 404);
+        }
+
+        $tenant = \App\Models\Tenant::find($tenantId);
+        if (!$tenant) {
+            return response()->json(['message' => 'Workspace not found.'], 404);
+        }
+
+        // Fetch active providers in this tenant
+        $providers = User::whereIn('role', ['admin', 'staff'])
+            ->select('id', 'name', 'email', 'avatar')
+            ->get();
+
+        return response()->json([
+            'tenant' => [
+                'id' => $tenant->id,
+                'name' => $tenant->name,
+                'slug' => $tenant->slug,
+                'logo_path' => $tenant->logo_path,
+                'brand_color' => $tenant->brand_color,
+                'custom_email_footer' => $tenant->custom_email_footer,
+            ],
+            'providers' => $providers
         ]);
     }
 
@@ -89,6 +135,27 @@ class PublicBookingController extends Controller
         }
 
         $availability = $provider->availability;
+        if (!$availability) {
+            $availability = \App\Models\Availability::updateOrCreate(
+                ['user_id' => $provider->id],
+                [
+                    'working_hours' => [
+                        'monday' => ['start' => '09:00', 'end' => '17:00'],
+                        'tuesday' => ['start' => '09:00', 'end' => '17:00'],
+                        'wednesday' => ['start' => '09:00', 'end' => '17:00'],
+                        'thursday' => ['start' => '09:00', 'end' => '17:00'],
+                        'friday' => ['start' => '09:00', 'end' => '17:00'],
+                    ],
+                    'breaks' => [
+                        ['start' => '12:00', 'end' => '13:00']
+                    ],
+                    'holidays' => [],
+                    'buffer_time' => 15,
+                    'timezone' => 'UTC',
+                    'tenant_id' => $provider->tenant_id,
+                ]
+            );
+        }
         $timezone = $availability->timezone ?? 'UTC';
         $clientTimezone = $request->query('timezone', $timezone);
 
@@ -269,5 +336,19 @@ class PublicBookingController extends Controller
             'deal' => $deal,
             'company' => $company
         ], 201);
+    }
+
+    /**
+     * Streams an iCalendar (.ics) invite file for the given appointment.
+     */
+    public function downloadIcs(Appointment $appointment, \App\Services\IcsGenerator $icsGenerator)
+    {
+        $content = $icsGenerator->generate($appointment);
+        $filename = 'invite-' . $appointment->id . '.ics';
+
+        return response($content, 200, [
+            'Content-Type' => 'text/calendar; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
     }
 }

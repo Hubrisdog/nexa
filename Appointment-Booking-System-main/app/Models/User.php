@@ -43,6 +43,11 @@ class User extends Authenticatable
         return $this->hasOne(Availability::class);
     }
 
+    public function calendarConnections()
+    {
+        return $this->hasMany(UserCalendarConnection::class);
+    }
+
     /**
      * The attributes that should be hidden for serialization.
      *

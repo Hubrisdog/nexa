@@ -154,7 +154,7 @@ const handleSaveDeal = async () => {
         deals.value.push(response.data);
         showDealModal.value = false;
         dealForm.value = { title: '', company_id: '', contact_id: '', value: 0, stage: 'cold', score: null };
-        triggerToast("New deal added successfully and qualified using AI scoring!");
+        triggerToast("New deal added and auto-scored successfully!");
     } catch (e) {
         console.error("Error saving deal:", e);
     } finally {
@@ -286,7 +286,7 @@ const handleDealDrop = async (e, stageKey) => {
         <div class="container-fluid d-flex flex-column flex-md-row justify-content-between align-items-md-center">
             <div>
                 <h1 class="font-weight-extrabold mb-1 tracking-tight" style="font-size: 26px;">B2B CRM Pipeline</h1>
-                <p class="text-muted mb-0 text-sm">Manage enterprise accounts, drag deal cards across sales stages, and auto-score leads using AI.</p>
+                <p class="text-muted mb-0 text-sm">Manage enterprise accounts, drag deal cards across sales stages, and auto-score leads.</p>
             </div>
             <div class="d-flex flex-wrap gap-2 mt-3 mt-md-0">
                 <button @click="showCompanyModal = true" class="btn btn-outline-secondary d-flex align-items-center" style="height: 40px; border-radius: 8px; font-weight: 500; font-size: 13.5px; gap: 6px;">
@@ -388,7 +388,7 @@ const handleDealDrop = async (e, stageKey) => {
                     </div>
 
                     <!-- Clean Empty Columns State Illustration -->
-                    <div v-slot:empty v-if="getFilteredDeals(stage.key).length === 0" class="d-flex align-items-center justify-content-center border-dashed py-5 text-center text-muted" style="border: 2px dashed var(--border-dark); border-radius: 8px; min-height: 120px;">
+                    <div v-if="getFilteredDeals(stage.key).length === 0" class="d-flex align-items-center justify-content-center border-dashed py-5 text-center text-muted" style="border: 2px dashed var(--border-dark); border-radius: 8px; min-height: 120px;">
                         <div class="px-2">
                             <i class="far fa-folder-open mb-1 text-muted d-block" style="font-size: 16px;"></i>
                             <span class="text-xs d-block">No active leads</span>

@@ -16,6 +16,11 @@ class Tenant extends Model
         'stripe_customer_id',
         'stripe_subscription_id',
         'subscription_status',
+        'logo_path',
+        'brand_color',
+        'custom_domain',
+        'custom_email_footer',
+        'booking_page_theme',
     ];
 
     public function users()
