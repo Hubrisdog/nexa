@@ -1,80 +1,193 @@
 <p align="center">
-  <img src="public/screenshots/dashboard.png" alt="Nexa Admin Dashboard" width="100%">
+  <img src="public/screenshots/dashboard.png" alt="Nexa Scheduler Dashboard" width="100%">
 </p>
 
 <p align="center">
-  <a href="https://laravel.com/"><img src="https://img.shields.io/badge/Framework-Laravel%2010-FF2D20?style=for-the-badge&logo=laravel&logoColor=white" alt="Framework Laravel 10"></a>
-  <a href="https://vuejs.org/"><img src="https://img.shields.io/badge/UI%20Framework-Vue%203%20%2B%20Vite-4FC08D?style=for-the-badge&logo=vue.js&logoColor=white" alt="UI Framework Vue 3"></a>
-  <a href="https://php.net/"><img src="https://img.shields.io/badge/Language-PHP%208.3-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="Language PHP 8.3"></a>
-  <a href="https://sqlite.org/"><img src="https://img.shields.io/badge/Database-SQLite%203-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="Database SQLite"></a>
-  <a href="#network-boundary--air-gapped-compliance"><img src="https://img.shields.io/badge/Architecture-Multi--Tenant-blueviolet?style=for-the-badge" alt="Architecture Multi-Tenant"></a>
+  <a href="https://laravel.com/"><img src="https://img.shields.io/badge/Framework-Laravel%2010-red?logo=laravel&style=for-the-badge" alt="Framework Laravel 10"></a>
+  <a href="https://vuejs.org/"><img src="https://img.shields.io/badge/UI%20Framework-Vue%203%20%2B%20Vite-green?logo=vue.js&style=for-the-badge" alt="UI Framework Vue 3"></a>
+  <a href="https://sqlite.org/"><img src="https://img.shields.io/badge/Database-SQLite%203-orange?logo=sqlite&style=for-the-badge" alt="Database SQLite"></a>
+  <a href="#developer-webhook-infrastructure"><img src="https://img.shields.io/badge/Webhooks-HMAC%20SHA256%20Signed-blue?style=for-the-badge" alt="Webhooks HMAC"></a>
 </p>
 
-# Nexa 🪐
+# Nexa Scheduler Engine
 
-**Premium B2B SaaS Scheduling & Enriched Sales Pipeline Infrastructure**
+**Enterprise-Grade B2B SaaS Scheduling & Enriched Sales Pipeline Infrastructure**
 
-Nexa is a commercial-grade, multi-tenant scheduling and B2B CRM SaaS platform. Built on a single-database isolated multi-tenant architecture, Nexa enables organizations to deploy custom-branded booking pages, sync internal schedules directly with external calendars (via Google OAuth), and automatically pipe bookings into an enriched B2B CRM sales funnel.
+Nexa is a commercial-grade, multi-tenant scheduling and B2B CRM SaaS engine. Built on a single-database isolated multi-tenant architecture, Nexa enables organizations to deploy custom-branded booking pages, sync internal schedules directly with external calendars (via Google OAuth), and automatically pipe bookings into an enriched B2B CRM sales funnel. 
 
 ---
 
-## Live Interactive Demo
+## Local Demo Walkthrough Guide
 
-A live interactive demo of the platform dashboard is available:
-👉 Live Application Dashboard: **[nexa-demo.vercel.app](https://aegis-threat-intel.vercel.app/)** *(Front-end HUD mock)*
+Nexa is designed to run locally on your development system to avoid unnecessary hosting costs. 
 
-### Quick Demo Walkthrough Guide
+### Quick Walkthrough Guide
 
 To explore the scheduling and CRM pipelines:
 
 1. **Authentication (Demo Auto-Login)**:
    - Access the local `/demo` route. The system will automatically generate a mock demo workspace (`demo` slug), seed initial analytics, and log you in as a system administrator.
-2. **Branding customization**:
-   - Go to **Settings** and modify the organization name, brand color, and logo. The system dynamically updates the layout variables (`--primary-color`) across all client-facing scheduling interfaces.
-3. **Simulate a booking**:
-   - Trigger a simulated B2B booking. You will see a new client profile generated, a B2B CRM Company and Contact initialized, and a qualified Opportunity (Deal) auto-scored by the AI engine.
-4. **Inspect the CRM Kanban**:
-   - Go to the **CRM Pipeline** tab and drag the generated deal through the pipeline stages. An automated audit trail and timeline activity log will generate.
+2. **Branding & Custom Domain**:
+   - Go to **Settings -> Branding & Logo** and modify the organization name, brand color, and custom domain (e.g. `book.acme.com`). The system dynamically updates the layout variables (`--primary-color`) across all client-facing scheduling interfaces.
+3. **Automated SSL Lifecycle**:
+   - Navigate to the new **Settings -> Domains & SSL** widget. Observe CNAME record instructions, and click **Verify DNS & Activate SSL** to trigger a simulated edge Let's Encrypt validation routine.
+4. **Outbound Developer Webhooks**:
+   - Navigate to the new **Settings -> Webhooks** panel. Configure an endpoint (e.g., mock target URL) and a signing secret. Use the **Test Payload** button to queue a simulated event, and check the delivery logs list.
+5. **Offline Resiliency Syncing**:
+   - To test offline resiliency: disconnect your network connection (or toggle offline mode in browser devtools). Update a deal stage on the **CRM Pipeline** board. A floating red warning alert will indicate offline mode. Reconnect your network to trigger automatic client-side synchronization and see the green success banner.
+6. **Simulate a Booking (Round-Robin)**:
+   - Visit the public booking link for the workspace (`/booking/team`) and append UTM parameters to the URL: `/booking/team?utm_source=google&utm_medium=cpc&utm_campaign=summer_promo`.
+   - Select the **Collective Team Booking** option. Book an available slot. The round-robin algorithm will automatically resolve active providers and route the slot to the available provider with the lowest daily appointment count.
+7. **Inspect the CRM Kanban & Attribution**:
+   - Navigate back to the **CRM Pipeline** tab. Verify that the newly created deal has the captured UTM attribution parameters (`utm_source=google`, etc.) and the deal is associated with the selected provider.
 
 ---
 
 ## Table of Contents
 
-1. [Live Interactive Demo](#live-interactive-demo)
-2. [Platform Capabilities](#platform-capabilities)
-3. [System Architecture](#system-architecture)
-4. [Core Workflows & Code Evidence](#core-workflows--code-evidence)
-5. [Engineering Lessons & Scars](#engineering-lessons--scars)
-6. [Directory Workspace Layout](#directory-workspace-layout)
-7. [Prerequisites & Development Setup](#prerequisites--development-setup)
-8. [Testing & Verification](#testing--verification)
+1. [Local Demo Walkthrough Guide](#local-demo-walkthrough-guide)
+2. [System Architecture](#system-architecture)
+3. [Core Technical Specifications](#core-technical-specifications)
+4. [Directory Workspace Layout](#directory-workspace-layout)
+5. [Deployment & Architectural Considerations](#deployment--architectural-considerations)
+6. [Prerequisites & Development Setup](#prerequisites--development-setup)
+7. [Testing & Verification](#testing--verification)
 
 ---
 
 ## System Architecture
 
-This flow diagram illustrates how Nexa resolves subdomains, checks availability constraints, and processes bookings:
+Nexa manages tenancy, resolves custom domains, handles collective team availability, executes workload-based round-robin routing, and runs outbound webhook sync hooks:
 
 ```mermaid
-graph TD
-    A[Visitor request to acme.nexa.co] --> B[TenantResolutionMiddleware]
-    B --> C{Verify Tenant & Subdomain}
-    C -->|Invalid| D[404 Workspace Not Found]
-    C -->|Valid| E[Public Booking Wizard]
-    E --> F[Availability Engine: Check local & Google Calendar Busy Slots]
-    F -->|Conflicts| G[Prompt Alternative Slot]
-    F -->|Available| H[Submit Booking POST]
-    H --> I[TenantLimitMiddleware Checks]
-    I -->|Free Limit Bypassed in Local| J[Create Appointment & B2B CRM Lead]
-    J --> K[Auto-create Company, Contact, and Deal Stage]
+flowchart TD
+    subgraph ClientLayer["🌐 Public Booking & HUD HUD"]
+        A[Visitor to acme.localhost:8000]
+        U[URL Query Params: utm_source, utm_medium...]
+        O[Offline Interceptor Queue: LocalStorage]
+    end
+
+    subgraph AppBoundary["⚙️ Nexa Multi-Tenant App Boundary"]
+        B[TenantResolutionMiddleware]
+        
+        subgraph SchedulingEngine["📅 Scheduling & Routing Core"]
+            AE[Availability Engine: Conflict Checker]
+            RR[Round-Robin Workload Allocator]
+        end
+
+        subgraph CRM["💼 B2B CRM Pipeline & Lead Scoring"]
+            C[Auto-created CRM Company]
+            D[Auto-created CRM Contact]
+            E[CRM Deal + UTM Attribution]
+            S[AI Lead Scorer]
+        end
+
+        db[("💾 SQLite Database <br> [Scoped tenant_id Index]")]
+        
+        subgraph DeveloperWebhooks["📡 Developer Webhook Pipeline"]
+            WS[Webhook Service]
+            QJ[Queue: DispatchWebhookJob]
+            WL[Webhook Delivery Logs]
+        end
+    end
+
+    subgraph External["🔔 Integrations & Edge Protocols"]
+        G[Google Calendar OAuth API]
+        LE[Mock Let's Encrypt Certificate Edge Validations]
+        R[Outbound Developer Endpoint]
+    end
+
+    %% Routing
+    A -->|1. Resolve Subdomain| B
+    B -->|2. Scopes Session| db
+    
+    %% Booking wizard
+    A -->|3. Check Slots| AE
+    AE -->|4. Query Calendar Syncs| G
+    
+    A -->|5. Book Slot| RR
+    U -->|6. Append Attribution| RR
+    
+    %% Round-Robin workload selection
+    RR -->|Lowest Workload Provider| db
+    
+    %% CRM and Attribution
+    RR -->|7. Auto-Sync Profile| C
+    RR -->|8. Link Contact| D
+    RR -->|9. Write Deal with UTM| E
+    E -->|10. Score Opportunity| S
+    
+    %% Offline Syncing
+    O -->|11. Sequenced Flush when Online| B
+    
+    %% Outbound Webhooks
+    db -->|12. Event Trigger| WS
+    WS -->|13. HMAC SHA256 Signature| QJ
+    QJ -->|14. HTTP POST + Retry Backoff| R
+    QJ -->|15. Log Latency| WL
+    
+    %% SSL Provisioning
+    B -->|16. Dynamic SSL verification| LE
 ```
 
 ---
 
-## Core Workflows & Code Evidence
+## Core Technical Specifications
 
-### 1. Composite Multi-Tenant Unique Constraints
-To ensure tenant-level separation while maintaining globally searchable client records, user emails are unique *per tenant*. The database schema defines a composite unique index:
+### 1. Webhook Signing & HMAC Authentication
+To protect external endpoints against payload injection attacks, Nexa computes an `HMAC SHA256` signature using the webhook's configured secret and attaches it to the `X-Nexa-Signature` header:
+```php
+// From /app/Jobs/DispatchWebhookJob.php
+$payloadJson = json_encode($this->payload);
+$signature = hash_hmac('sha256', $payloadJson, $subscription->secret);
+
+$response = Http::withHeaders([
+    'Content-Type' => 'application/json',
+    'X-Nexa-Event' => $this->event,
+    'X-Nexa-Signature' => $signature,
+])->timeout(10)->post($subscription->url, $this->payload);
+```
+
+### 2. Workload-Balanced Round-Robin Allocation
+Collective booking slots route dynamically to the staff member with the lowest appointment count for the selected day. If counts are equal, the system routes to the first available member (lowest User ID):
+```php
+// From /app/Http/Controllers/PublicBookingController.php
+foreach ($providers as $p) {
+    $check = $availabilityService->checkAvailability($p, $start, $end);
+    if ($check['available']) {
+        $count = Appointment::where('staff_id', $p->id)
+            ->whereBetween('start_time', [$startOfDay, $endOfDay])
+            ->count();
+        $eligibleProviders[] = ['provider' => $p, 'count' => $count];
+    }
+}
+usort($eligibleProviders, function($a, $b) {
+    if ($a['count'] === $b['count']) {
+        return $a['provider']->id <=> $b['provider']->id;
+    }
+    return $a['count'] <=> $b['count'];
+});
+$provider = $eligibleProviders[0]['provider'];
+```
+
+### 3. Offline Mutation Interceptor Queue
+Nexa intercepts data mutations (`POST`, `PUT`, `DELETE`, `PATCH`) on network failure or offline states, serializes them to `localStorage`, and queues them for sequential FIFO syncing when connection returns:
+```javascript
+// From /resources/js/utils/offlineQueue.js
+export function registerOfflineInterceptor(onOfflineTriggered, onSyncCompleted) {
+    axios.interceptors.request.use((config) => {
+        if (isMutation(config) && !navigator.onLine) {
+            addToQueue(config);
+            if (onOfflineTriggered) onOfflineTriggered(config);
+            return Promise.reject({ isOfflineQueue: true, config });
+        }
+        return config;
+    });
+}
+```
+
+### 4. Dynamic Composite Tenancy Constraint
+To support tenant data scoping without risking duplicate guest emails colliding across organizations, Nexa drops the global database-level index and enforces a composite database-level index:
 ```php
 // From /database/migrations/2026_06_08_000000_fix_users_unique_constraint.php
 Schema::table('users', function (Blueprint $table) {
@@ -82,35 +195,6 @@ Schema::table('users', function (Blueprint $table) {
     $table->unique(['email', 'tenant_id']);
 });
 ```
-
-### 2. Optimized Availability Math (Range Filtering)
-To verify slot conflicts without loading a provider's entire booking history into memory, the database query checks overlapping start and end times bounded by the provider's active buffer:
-```php
-// From /app/Services/AvailabilityService.php
-$existingAppointments = Appointment::where('staff_id', $provider->id)
-    ->where('status', '!=', 'cancelled')
-    ->where('start_time', '<', $end)
-    ->where('end_time', '>', $start->copy()->subMinutes($bufferMinutes))
-    ->get();
-```
-
-### 3. Aggregated Analytical Count Matrices
-Nexa aggregates metrics like CRM stages and completion rates in single, grouped queries instead of performing queries inside loops:
-```php
-// From /app/Http/Controllers/Admin/AnalyticsController.php
-$providerStats = Appointment::selectRaw("staff_id, status, count(*) as count")
-    ->groupBy('staff_id', 'status')
-    ->get()
-    ->groupBy('staff_id');
-```
-
----
-
-## Engineering Lessons & Scars
-
-* **The Cross-Tenant Client Clash**: In early versions, `users.email` carried a global database unique index. Under a subdomain multi-tenant setup, this caused 500 database crashes whenever a guest tried to book a slot under Tenant B using an email address that had previously booked under Tenant A. Resolving this required dropping the global index, migrating to a composite unique index (`['email', 'tenant_id']`), and scoping validation rules to the active tenant ID.
-* **The Queue Serialization Blindspot**: Background Google/Outlook calendar synchronization jobs are dispatched to queue workers to keep HTTP responses fast. However, queue serialization stripped the `$appointment->staff_id` relationship properties from the payload, causing background workers to resolve provider relationships to `null` and silently fall back to mock sync modes. We resolved this by explicitly mapping and hydrating `$staffId` and `$clientId` inside `SyncCalendarJob`.
-* **Redundant Query Storms**: The admin dashboard initially performed over 48 individual SQL count/sum roundtrips per request (counting appointments, calculating show rates, and looping through providers). As data scales, this introduces high database latency. Consolidating these loops into `groupBy` SQL aggregates reduced database roundtrips by 90%.
 
 ---
 
@@ -121,23 +205,38 @@ Nexa/
 ├── app/
 │   ├── Http/
 │   │   ├── Controllers/
-│   │   │   └── Admin/           # Admin Dashboard, CRM, AI, & OAuth Controllers
+│   │   │   └── Admin/           # Admin Dashboard, CRM, AI, Webhook & OAuth Controllers
 │   │   └── Middleware/          # Tenant Resolution & Subscription Limit Checkers
-│   ├── Jobs/                    # Background Queue Tasks (SyncCalendarJob)
-│   ├── Models/                  # Multi-tenant Eloquent models
-│   ├── Services/                # Availability engines, Google & Outlook calendar APIs
+│   ├── Jobs/                    # Outbound Webhooks (DispatchWebhookJob) & Calendar Sync
+│   ├── Models/                  # Multi-tenant Eloquent models (WebhookSubscription, WebhookDelivery)
+│   ├── Services/                # Availability, WebhookService, Google & Outlook calendar APIs
 │   └── Traits/                  # BelongsToTenant global scoping traits
 ├── database/
-│   ├── migrations/              # Database Schema & Performance Index Migrations
-│   └── seeders/                 # Seeding scripts for demo simulations
+│   └── migrations/              # Webhooks schema & CRM UTM column migrations
 ├── resources/
 │   ├── js/                      # Vue 3 SPA Client Workspace
-│   │   ├── components/          # Dashboard panels & CRM boards
-│   │   └── pages/               # Calendar, Settings, and Auth views
-│   └── views/                   # Server-side Blade layouts
+│   │   ├── pages/               # Calendar, Settings (Webhook/SSL panel), and Auth views
+│   │   └── utils/               # Offline queue helper (offlineQueue.js)
+│   └── views/                   # Server-side Blade layouts (app.blade.php)
 └── routes/
-    └── web.php                  # Web and Protected API Route Registry
+    └── web.php                  # Web, public bookings, and protected admin API routing
 ```
+
+---
+
+## Deployment & Architectural Considerations
+
+Nexa is optimized for local environments and cost-free execution. To avoid cloud hosting fees, the production platform has purposefully not been deployed to a live server. Below is an architectural overview of why serverless platforms like Vercel are unsuitable for Nexa, followed by budget-friendly alternatives.
+
+### Why Vercel is Not Suitable for Nexa
+1. **Stateless Serverless Runtimes (SQLite Conflict)**: Nexa uses a local SQLite database (`database.sqlite`) for storing bookings and CRM data. Vercel's serverless functions are ephemeral—they spin down and reset, which would completely erase your database contents and cause data desynchronization across concurrent client requests.
+2. **Persistent Background Queues**: Developer webhook dispatches and email schedules run on Laravel's queue worker (`php artisan queue:work`). Vercel does not support long-running, persistent processes to process queue jobs.
+3. **No Native PHP Support**: Vercel is designed for Node.js/frontend runtimes. Running Laravel on Vercel requires community-built runtimes (like `vercel-php`) and complex routing layers (`vercel.json`) that are fragile and harder to maintain.
+
+### Recommended Free & Cheap Hosting Alternatives
+If you decide to deploy Nexa in the future without incurring high costs, consider these alternatives:
+* **Fly.io / Railway / Render (Zero-to-Low Cost PaaS)**: These platforms offer a git-push workflow like Vercel but run standard persistent containers. You can attach a persistent volume for the SQLite database or host a free tier PostgreSQL database alongside the app.
+* **VPS + Laravel Forge / Ploi (~$4/mo)**: You can rent a low-cost VPS from Hetzner, OVH, or DigitalOcean, and manage it with Laravel Forge or Ploi. This automatically sets up Nginx, PHP, SSL (Let's Encrypt), queues, and scheduled cron jobs.
 
 ---
 
@@ -147,6 +246,7 @@ Nexa/
 * **PHP >= 8.2** (with PDO SQLite extension enabled)
 * **Composer**
 * **Node.js >= 18**
+* **SQLite 3**
 
 ### Installation
 
@@ -184,8 +284,13 @@ Nexa/
 
 ## Testing & Verification
 
-Run the full PHPUnit verification suite:
+Run the full PHPUnit verification suite, including our webhooks and round-robin features:
 ```bash
 php artisan test
 ```
-The test suite utilizes an isolated, in-memory SQLite database, guaranteeing that your local database environment remains untouched during test execution.
+
+The test suite runs on an isolated in-memory database, verifying:
+- Webhook Subscriptions CRUD and HMAC signatures.
+- Outbound event delivery and request telemetry logging.
+- Team scheduling union calculations.
+- Lowest-workload workload round-robin allocation logic.

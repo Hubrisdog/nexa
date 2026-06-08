@@ -6,17 +6,41 @@ import { createApp } from 'vue/dist/vue.esm-bundler.js';
 import router from './route.js';
 import axios from 'axios';
 import CommandSearch from './components/CommandSearch.vue';
+import { registerOfflineInterceptor } from './utils/offlineQueue.js';
 
 const app = createApp({
     data() {
         return {
             currentUser: null,
             isResettingDemo: false,
-            isLoggingOut: false
+            isLoggingOut: false,
+            isOffline: !navigator.onLine,
+            showSyncSuccess: false
         };
     },
     created() {
         this.updateCurrentUser();
+        this.isOffline = !navigator.onLine;
+
+        window.addEventListener('offline', () => {
+            this.isOffline = true;
+        });
+
+        window.addEventListener('online', () => {
+            this.isOffline = false;
+        });
+
+        registerOfflineInterceptor(
+            () => {
+                this.isOffline = true;
+            },
+            () => {
+                this.showSyncSuccess = true;
+                setTimeout(() => {
+                    this.showSyncSuccess = false;
+                }, 5000);
+            }
+        );
     },
     methods: {
         updateCurrentUser() {

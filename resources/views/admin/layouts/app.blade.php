@@ -17,6 +17,18 @@
 <body class="hold-transition sidebar-mini">
     <div class="wrapper" id="app">
 
+        <!-- Offline Banner Alert -->
+        <div v-if="isOffline" class="offline-banner animate-slide-down" style="position: fixed; top: 0; left: 0; right: 0; background-color: #ef4444; color: white; text-align: center; padding: 12px; z-index: 9999; font-weight: 700; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-bottom: 2px solid #dc2626; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <i class="fas fa-wifi-slash"></i>
+            <span>Offline Mode Enabled. Changes will be saved locally and auto-synchronized when your connection is restored.</span>
+        </div>
+
+        <!-- Sync Success Banner Alert -->
+        <div v-if="showSyncSuccess" class="sync-success-banner animate-slide-down" style="position: fixed; top: 0; left: 0; right: 0; background-color: #10b981; color: white; text-align: center; padding: 12px; z-index: 9999; font-weight: 700; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-bottom: 2px solid #059669; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <i class="fas fa-check-circle animate-bounce"></i>
+            <span>Network connection restored. All queued actions synced successfully!</span>
+        </div>
+
         <!-- Logout Overlay -->
         <div v-if="isLoggingOut" class="logout-overlay">
             <div class="spinner-border text-indigo mb-3" style="width: 3rem; height: 3rem;" role="status">

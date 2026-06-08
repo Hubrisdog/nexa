@@ -42,6 +42,26 @@
                 </div>
 
                 <div class="d-flex flex-column gap-3 mx-auto" style="max-width: 480px;">
+                    <!-- Collective Team Booking Option -->
+                    <div 
+                        class="d-flex align-items-center justify-content-between p-3 rounded-lg border hover-card mb-2" 
+                        style="background-color: var(--bg-dark-hover); border-color: var(--primary-color) !important; cursor: pointer; transition: all 0.2s;"
+                        @click="selectTeamProvider"
+                    >
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="avatar-initials bg-indigo" style="width: 44px; height: 44px; border-radius: 10px; font-size: 16px; font-weight: 800; display: flex; align-items: center; justify-content: center; background: var(--primary-color) !important;">
+                                <i class="fas fa-users text-white"></i>
+                            </div>
+                            <div class="text-left">
+                                <span class="font-weight-bold text-white text-sm d-block">Collective Team Booking</span>
+                                <span class="text-xs text-muted d-block mt-0.5">Route dynamically to the next available staff member</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-indigo px-3 py-1.5" style="border-radius: 8px; font-size: 12px; font-weight: 500;">
+                            Book with Team
+                        </button>
+                    </div>
+
                     <div 
                         v-for="p in providers" 
                         :key="p.id" 
@@ -353,7 +373,14 @@ export default {
                 { label: 'Book Jane Smith on Tuesday', text: 'Book Jane Smith next Tuesday' },
                 { label: 'Schedule John Doe in the morning', text: 'Schedule John Doe next Monday morning' },
                 { label: 'Book Sarah Johnson tomorrow', text: 'Book Sarah Johnson tomorrow' }
-            ]
+            ],
+            utmParams: {
+                utm_source: null,
+                utm_medium: null,
+                utm_campaign: null,
+                utm_term: null,
+                utm_content: null
+            }
         };
     },
     computed: {
@@ -392,6 +419,16 @@ export default {
     created() {
         this.username = this.$route.params.username;
         this.initWorkspace();
+        
+        // Capture UTM parameters from URL query string
+        const queries = this.$route.query;
+        this.utmParams = {
+            utm_source: queries.utm_source || null,
+            utm_medium: queries.utm_medium || null,
+            utm_campaign: queries.utm_campaign || null,
+            utm_term: queries.utm_term || null,
+            utm_content: queries.utm_content || null
+        };
     },
     methods: {
         async initWorkspace() {
@@ -445,6 +482,17 @@ export default {
                 this.loadingProvider = false;
             }
         },
+        async selectTeamProvider() {
+            this.loadingProvider = true;
+            try {
+                await this.fetchProvider('team');
+                this.selectedDate = '';
+                this.slots = [];
+                this.step = 1;
+            } finally {
+                this.loadingProvider = false;
+            }
+        },
         goBackToStaff() {
             this.provider = {};
             this.showStaffSelector = true;
@@ -486,7 +534,8 @@ export default {
                     end_time: this.selectedSlot.end,
                     client_name: this.form.name,
                     client_email: this.form.email,
-                    notes: this.form.notes
+                    notes: this.form.notes,
+                    ...this.utmParams
                 };
                 const response = await axios.post('/api/public/book', payload);
                 if (response.data.success) {

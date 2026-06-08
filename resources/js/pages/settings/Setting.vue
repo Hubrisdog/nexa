@@ -182,6 +182,118 @@ onMounted(() => {
         setTimeout(() => { isSuccess.value = false; }, 3000);
     }
 });
+
+// Webhooks settings state
+const webhookSubscriptions = ref([]);
+const webhookDeliveries = ref([]);
+const isSavingWebhook = ref(false);
+const isTestingWebhook = ref({});
+const newWebhook = ref({
+    url: '',
+    secret: '',
+    events: ['appointment.created'],
+    is_active: true
+});
+const editingWebhookId = ref(null);
+
+const fetchWebhooks = async () => {
+    try {
+        const response = await axios.get('/api/webhooks');
+        webhookSubscriptions.value = response.data.subscriptions;
+        webhookDeliveries.value = response.data.deliveries;
+    } catch (error) {
+        console.error("Error fetching webhooks:", error);
+    }
+};
+
+const saveWebhook = async () => {
+    isSavingWebhook.value = true;
+    try {
+        if (editingWebhookId.value) {
+            await axios.put(`/api/webhooks/${editingWebhookId.value}`, newWebhook.value);
+        } else {
+            await axios.post('/api/webhooks', newWebhook.value);
+        }
+        newWebhook.value = {
+            url: '',
+            secret: '',
+            events: ['appointment.created'],
+            is_active: true
+        };
+        editingWebhookId.value = null;
+        await fetchWebhooks();
+    } catch (error) {
+        console.error("Error saving webhook:", error);
+        alert(error.response?.data?.message || 'Error saving webhook subscription.');
+    } finally {
+        isSavingWebhook.value = false;
+    }
+};
+
+const editWebhook = (sub) => {
+    editingWebhookId.value = sub.id;
+    newWebhook.value = {
+        url: sub.url,
+        secret: sub.secret,
+        events: Array.isArray(sub.events) ? sub.events : ['appointment.created'],
+        is_active: !!sub.is_active
+    };
+};
+
+const deleteWebhook = async (id) => {
+    if (confirm('Are you sure you want to delete this webhook subscription?')) {
+        try {
+            await axios.delete(`/api/webhooks/${id}`);
+            await fetchWebhooks();
+        } catch (error) {
+            console.error("Error deleting webhook:", error);
+        }
+    }
+};
+
+const testWebhook = async (id) => {
+    isTestingWebhook.value[id] = true;
+    try {
+        await axios.post(`/api/webhooks/${id}/test`);
+        alert('Test webhook payload queued successfully!');
+        setTimeout(() => {
+            fetchWebhooks();
+        }, 1500);
+    } catch (error) {
+        console.error("Error testing webhook:", error);
+        alert('Failed to trigger test webhook.');
+    } finally {
+        isTestingWebhook.value[id] = false;
+    }
+};
+
+// SSL Provisioning state (Mock)
+const sslStatus = ref('unprovisioned'); // unprovisioned, generating, active
+const sslGeneratingStep = ref(0);
+const isProvisioningSsl = ref(false);
+
+const startSslProvisioning = async () => {
+    if (isProvisioningSsl.value) return;
+    isProvisioningSsl.value = true;
+    sslStatus.value = 'generating';
+    sslGeneratingStep.value = 1;
+
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    sslGeneratingStep.value = 2;
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    sslGeneratingStep.value = 3;
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    sslGeneratingStep.value = 4;
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    sslStatus.value = 'active';
+    isProvisioningSsl.value = false;
+    alert('SSL certificate successfully provisioned and installed!');
+};
+
+onMounted(() => {
+    fetchWebhooks();
+});
 </script>
 
 <template>
@@ -213,6 +325,12 @@ onMounted(() => {
                             </span>
                             <span @click="activeTab = 'branding'" class="tab-link" :class="{ 'active': activeTab === 'branding' }">
                                 <i class="fas fa-paint-brush mr-2"></i> Branding & Logo
+                            </span>
+                            <span @click="activeTab = 'webhooks'" class="tab-link" :class="{ 'active': activeTab === 'webhooks' }">
+                                <i class="fas fa-code mr-2"></i> Webhooks
+                            </span>
+                            <span @click="activeTab = 'ssl'" class="tab-link" :class="{ 'active': activeTab === 'ssl' }">
+                                <i class="fas fa-shield-alt mr-2"></i> Domains & SSL
                             </span>
                             <span @click="activeTab = 'billing'" class="tab-link" :class="{ 'active': activeTab === 'billing' }">
                                 <i class="fas fa-credit-card mr-2"></i> Billing & Plan
@@ -460,6 +578,212 @@ onMounted(() => {
                                 <span v-if="isSavingBranding"><i class="fas fa-spinner fa-spin mr-1"></i> Saving...</span>
                                 <span v-else>Save Branding Details</span>
                             </button>
+                        </div>
+
+                        <!-- Tab: Webhooks -->
+                        <div v-if="activeTab === 'webhooks'" class="tab-body py-2">
+                            <h6 class="font-weight-bold text-white mb-2" style="font-size: 15px;">Developer Outbound Webhooks</h6>
+                            <p class="text-secondary text-sm mb-4">Register webhooks to receive real-time JSON payloads when scheduling events occur in your tenant.</p>
+                            
+                            <!-- Form to Add/Edit Webhook -->
+                            <div class="card p-4 mb-4 border" style="border-radius: 12px; background-color: var(--bg-dark-hover); border-color: var(--border-dark) !important;">
+                                <h6 class="font-weight-bold text-white mb-3" style="font-size: 14px;">
+                                    {{ editingWebhookId ? 'Edit Webhook Subscription' : 'Register New Webhook Endpoint' }}
+                                </h6>
+                                <form @submit.prevent="saveWebhook">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-xs">Target Endpoint URL</label>
+                                            <input v-model="newWebhook.url" type="url" class="form-control-modern w-100" placeholder="https://api.yourdomain.com/webhooks/nexa" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-xs">Secret Signing Key (HMAC SHA256)</label>
+                                            <input v-model="newWebhook.secret" type="text" class="form-control-modern w-100" placeholder="whsec_xxxxxxxxxxxxxxxxxxxxxx" required>
+                                        </div>
+                                    </div>
+                                    <div class="row align-items-center">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-xs d-block mb-2">Subscribed Events</label>
+                                            <div class="d-flex gap-3 flex-wrap">
+                                                <label class="d-flex align-items-center gap-2 text-sm text-secondary cursor-pointer">
+                                                    <input type="checkbox" value="appointment.created" v-model="newWebhook.events">
+                                                    <span>appointment.created</span>
+                                                </label>
+                                                <label class="d-flex align-items-center gap-2 text-sm text-secondary cursor-pointer">
+                                                    <input type="checkbox" value="deal.updated" v-model="newWebhook.events">
+                                                    <span>deal.updated</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3 text-right pt-3">
+                                            <button v-if="editingWebhookId" type="button" @click="editingWebhookId = null; newWebhook = {url:'', secret:'', events:['appointment.created'], is_active:true}" class="btn btn-sm btn-outline-secondary mr-2" style="border-radius: 8px;">Cancel</button>
+                                            <button type="submit" class="btn btn-sm btn-indigo px-4" style="border-radius: 8px; font-weight: 500;" :disabled="isSavingWebhook">
+                                                {{ isSavingWebhook ? 'Saving...' : (editingWebhookId ? 'Update Subscription' : 'Register Webhook') }}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <!-- List of Subscriptions -->
+                            <div class="mb-4">
+                                <h6 class="font-weight-bold text-white mb-3" style="font-size: 14px;">Configured Webhooks</h6>
+                                <div v-if="webhookSubscriptions.length === 0" class="text-center py-4 text-muted border border-dashed rounded-lg" style="border-color: var(--border-dark) !important;">
+                                    No active webhooks configured for this workspace.
+                                </div>
+                                <div v-else class="d-flex flex-column gap-3">
+                                    <div v-for="sub in webhookSubscriptions" :key="sub.id" class="d-flex align-items-center justify-content-between p-3 rounded-lg border" style="background-color: var(--bg-dark-hover); border-color: var(--border-dark) !important; border-radius: 12px;">
+                                        <div class="text-left" style="max-width: 70%;">
+                                            <span class="font-weight-bold d-block text-white text-sm truncate">{{ sub.url }}</span>
+                                            <div class="d-flex gap-2 mt-1.5 flex-wrap">
+                                                <span v-for="ev in sub.events" :key="ev" class="badge bg-indigo text-xs text-white" style="background: var(--primary-color);">{{ ev }}</span>
+                                                <span class="badge text-xs" :class="sub.is_active ? 'badge-success' : 'badge-secondary'">{{ sub.is_active ? 'Active' : 'Paused' }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex gap-2">
+                                            <button @click="testWebhook(sub.id)" class="btn btn-xs btn-outline-indigo" style="border-radius: 6px; font-weight: 500;" :disabled="isTestingWebhook[sub.id]">
+                                                <i class="fas mr-1" :class="isTestingWebhook[sub.id] ? 'fa-spinner fa-spin' : 'fa-paper-plane'"></i>
+                                                <span>{{ isTestingWebhook[sub.id] ? 'Testing...' : 'Test Payload' }}</span>
+                                            </button>
+                                            <button @click="editWebhook(sub)" class="btn btn-xs btn-outline-secondary" style="border-radius: 6px;"><i class="fas fa-edit"></i></button>
+                                            <button @click="deleteWebhook(sub.id)" class="btn btn-xs btn-outline-danger" style="border-radius: 6px;"><i class="fas fa-trash-alt"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Deliveries Logs Card -->
+                            <div>
+                                <h6 class="font-weight-bold text-white mb-3" style="font-size: 14px;">Recent Webhook Deliveries Log</h6>
+                                <div class="card border" style="border-radius: 12px; background-color: var(--bg-dark-hover); border-color: var(--border-dark) !important; overflow: hidden;">
+                                    <div class="table-responsive" style="max-height: 250px;">
+                                        <table class="table table-dark table-striped mb-0 text-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Event</th>
+                                                    <th>Status</th>
+                                                    <th>Target URL</th>
+                                                    <th>Latency</th>
+                                                    <th>Time</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr v-if="webhookDeliveries.length === 0">
+                                                    <td colspan="5" class="text-center py-3 text-muted">No webhook deliveries logged yet.</td>
+                                                </tr>
+                                                <tr v-for="log in webhookDeliveries" :key="log.id">
+                                                    <td><code>{{ log.event }}</code></td>
+                                                    <td>
+                                                        <span class="badge" :class="log.response_status >= 200 && log.response_status < 300 ? 'badge-success' : 'badge-danger'">
+                                                            {{ log.response_status || 'Failed' }}
+                                                        </span>
+                                                    </td>
+                                                    <td class="text-truncate" style="max-width: 200px;">{{ log.subscription?.url || 'Test URL' }}</td>
+                                                    <td>{{ log.duration_ms }}ms</td>
+                                                    <td>{{ new Date(log.created_at).toLocaleTimeString() }}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tab: SSL Domains -->
+                        <div v-if="activeTab === 'ssl'" class="tab-body py-2">
+                            <h6 class="font-weight-bold text-white mb-2" style="font-size: 15px;">Custom Domain SSL Lifecycle Manager</h6>
+                            <p class="text-secondary text-sm mb-4">Route B2B scheduling interactions through your own brand. Point your DNS records and provision a dedicated Let's Encrypt certificate.</p>
+                            
+                            <div class="card p-4 border mb-4" style="border-radius: 12px; background-color: var(--bg-dark-hover); border-color: var(--border-dark) !important;">
+                                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+                                    <div>
+                                        <span class="text-muted text-xs font-weight-bold uppercase tracking-wider block">Custom Domain Address</span>
+                                        <h5 class="font-weight-extrabold text-white mt-1 mb-0">{{ brandingForm.custom_domain || 'No custom domain configured' }}</h5>
+                                    </div>
+                                    <div>
+                                        <span class="badge px-3 py-1.5 rounded-pill uppercase tracking-wider" 
+                                              :class="sslStatus === 'active' ? 'badge-success' : (sslStatus === 'generating' ? 'badge-warning' : 'badge-secondary')" 
+                                              style="font-size: 11px; border-radius: 12px;">
+                                            SSL: {{ sslStatus }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div v-if="!brandingForm.custom_domain" class="text-muted text-sm py-2 text-left">
+                                    <i class="fas fa-info-circle text-info mr-2"></i> Set a custom white-label domain in the <strong>Branding & Logo</strong> tab first to manage certificates.
+                                </div>
+
+                                <div v-else>
+                                    <!-- DNS Instructions -->
+                                    <h6 class="font-weight-bold text-white text-xs uppercase mb-3 text-left">1. Add DNS Mapping Record</h6>
+                                    <div class="p-3 mb-4 rounded border text-sm text-secondary bg-dark text-left" style="font-family: monospace; border-color: var(--border-dark) !important;">
+                                        <div class="row">
+                                            <div class="col-sm-3 font-weight-bold text-white">TYPE</div>
+                                            <div class="col-sm-4 font-weight-bold text-white">HOST</div>
+                                            <div class="col-sm-5 font-weight-bold text-white">VALUE (TARGET)</div>
+                                        </div>
+                                        <hr class="my-2" style="border-color: var(--border-dark);">
+                                        <div class="row mt-1">
+                                            <div class="col-sm-3 text-success">CNAME</div>
+                                            <div class="col-sm-4">{{ brandingForm.custom_domain.split('.')[0] }}</div>
+                                            <div class="col-sm-5">cname.nexasched.com</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Provisioning Steps Widget -->
+                                    <h6 class="font-weight-bold text-white text-xs uppercase mb-3 text-left">2. Provision SSL Certificate</h6>
+                                    
+                                    <!-- Dynamic Progress steps -->
+                                    <div v-if="sslStatus === 'generating'" class="p-4 mb-4 rounded border text-left" style="background: rgba(245, 158, 11, 0.04); border-color: rgba(245, 158, 11, 0.25) !important;">
+                                        <div class="d-flex align-items-center justify-content-between mb-3">
+                                            <span class="text-sm font-weight-bold text-warning"><i class="fas fa-sync fa-spin mr-2"></i> Generating SSL Certificate...</span>
+                                            <span class="text-xs text-muted">{{ Math.round((sslGeneratingStep / 4) * 100) }}% complete</span>
+                                        </div>
+                                        <div class="progress progress-sm mb-3" style="height: 6px; background-color: var(--bg-dark-accent);">
+                                            <div class="progress-bar bg-warning progress-bar-striped progress-bar-animated" :style="{ width: (sslGeneratingStep / 4) * 100 + '%' }"></div>
+                                        </div>
+                                        <ul class="list-unstyled text-xs text-muted mb-0" style="padding-left: 0; list-style: none;">
+                                            <li class="mb-2" :class="{ 'text-success font-weight-bold': sslGeneratingStep >= 1 }">
+                                                <i class="fas mr-1.5" :class="sslGeneratingStep > 1 ? 'fa-check-circle text-success' : (sslGeneratingStep === 1 ? 'fa-circle-notch fa-spin text-warning' : 'fa-circle')"></i>
+                                                Checking DNS CNAME validation record...
+                                            </li>
+                                            <li class="mb-2" :class="{ 'text-success font-weight-bold': sslGeneratingStep >= 2 }">
+                                                <i class="fas mr-1.5" :class="sslGeneratingStep > 2 ? 'fa-check-circle text-success' : (sslGeneratingStep === 2 ? 'fa-circle-notch fa-spin text-warning' : 'fa-circle')"></i>
+                                                Requesting authorization challenge from Let's Encrypt CA...
+                                            </li>
+                                            <li class="mb-2" :class="{ 'text-success font-weight-bold': sslGeneratingStep >= 3 }">
+                                                <i class="fas mr-1.5" :class="sslGeneratingStep > 3 ? 'fa-check-circle text-success' : (sslGeneratingStep === 3 ? 'fa-circle-notch fa-spin text-warning' : 'fa-circle')"></i>
+                                                Generating cryptographic signature keys & cert payload...
+                                            </li>
+                                            <li class="mb-0" :class="{ 'text-success font-weight-bold': sslGeneratingStep >= 4 }">
+                                                <i class="fas mr-1.5" :class="sslGeneratingStep >= 4 ? 'fa-check-circle text-success' : 'fa-circle'"></i>
+                                                Installing SSL files to edge load balancers...
+                                            </li>
+                                        </ul>
+                                    </div>
+
+                                    <div v-else-if="sslStatus === 'active'" class="p-4 mb-4 rounded border text-sm text-secondary bg-dark-accent text-left" style="border-color: rgba(16, 185, 129, 0.2) !important; background: rgba(16, 185, 129, 0.03);">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <i class="fas fa-check-circle text-success fa-2x"></i>
+                                            <div>
+                                                <span class="font-weight-bold text-white d-block">SSL Certificate active and healthy</span>
+                                                <span class="text-xs text-muted block mt-0.5">Expires in 89 days (Auto-renewals enabled)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div v-else class="text-sm text-secondary mb-4 text-left">
+                                        Once your DNS settings propagation is complete, click below to verify ownership records and activate SSL encryption.
+                                    </div>
+
+                                    <div class="text-left">
+                                        <button type="button" @click="startSslProvisioning" class="btn btn-indigo px-4" style="border-radius: 8px;" :disabled="sslStatus === 'generating'">
+                                            <i class="fas fa-shield-alt mr-2"></i> Verify DNS & Activate SSL
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         </div>
                     </div>
                 </div>

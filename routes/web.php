@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\AiController;
 use App\Http\Controllers\Admin\DemoController;
 use App\Http\Controllers\Admin\GlobalSearchController;
 use App\Http\Controllers\Admin\OAuthController;
+use App\Http\Controllers\Admin\WebhookController;
 use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\PublicBookingController;
 use Illuminate\Support\Facades\Route;
@@ -97,6 +98,10 @@ Route::middleware('auth')->group(function () {
 
     // AI Summarization Route
     Route::post('/api/appointments/{appointment}/summarize', [AiController::class, 'summarize'])->middleware('tenant.limit');
+
+    // Webhook Configuration CRUD
+    Route::apiResource('/api/webhooks', WebhookController::class);
+    Route::post('/api/webhooks/{id}/test', [WebhookController::class, 'testWebhook']);
 
     // Demo Simulation Route
     Route::post('/api/demo/simulate', [DemoController::class, 'runSimulation']);

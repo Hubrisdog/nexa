@@ -18,6 +18,11 @@ class Deal extends Model
         'stage',
         'score',
         'tenant_id',
+        'utm_source',
+        'utm_medium',
+        'utm_campaign',
+        'utm_term',
+        'utm_content',
     ];
 
     protected $casts = [

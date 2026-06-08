@@ -18,7 +18,7 @@ class CrmController extends Controller
         return response()->json($deals);
     }
 
-    public function updateDealStage(Request $request, Deal $deal)
+    public function updateDealStage(Request $request, Deal $deal, \App\Services\WebhookService $webhookService)
     {
         $fields = $request->validate([
             'stage' => ['required', Rule::in(['cold', 'contacted', 'interested', 'booked', 'closed_won', 'closed_lost'])]
@@ -46,6 +46,19 @@ class CrmController extends Controller
             ['stage' => $fields['stage']],
             "Moved deal '{$deal->title}' from " . ucfirst($oldStage) . " to " . ucfirst($fields['stage'])
         );
+
+        // Dispatch Webhook Event
+        $webhookService->dispatch('deal.updated', [
+            'event' => 'deal.updated',
+            'deal_id' => $deal->id,
+            'title' => $deal->title,
+            'value' => $deal->value,
+            'stage' => $deal->stage,
+            'old_stage' => $oldStage,
+            'score' => $deal->score,
+            'tenant_id' => $deal->tenant_id,
+            'timestamp' => now()->toIso8601String()
+        ], $deal->tenant_id);
 
         return response()->json($deal->load(['company', 'contact']));
     }

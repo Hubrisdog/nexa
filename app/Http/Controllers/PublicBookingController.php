@@ -24,6 +24,33 @@ class PublicBookingController extends Controller
      */
     public function getProvider($username)
     {
+        if ($username === 'team') {
+            $tenantId = session('tenant_id') ?? 1;
+            $tenant = \App\Models\Tenant::find($tenantId) ?? \App\Models\Tenant::first();
+            
+            return response()->json([
+                'id' => 0,
+                'name' => 'Collective Team',
+                'email' => 'team@nexa.co',
+                'avatar' => null,
+                'timezone' => 'UTC',
+                'working_hours' => [
+                    'monday' => ['start' => '09:00', 'end' => '17:00'],
+                    'tuesday' => ['start' => '09:00', 'end' => '17:00'],
+                    'wednesday' => ['start' => '09:00', 'end' => '17:00'],
+                    'thursday' => ['start' => '09:00', 'end' => '17:00'],
+                    'friday' => ['start' => '09:00', 'end' => '17:00'],
+                ],
+                'buffer_time' => 15,
+                'tenant_id' => $tenant->id,
+                'tenant' => [
+                    'name' => $tenant->name,
+                    'logo_path' => $tenant->logo_path,
+                    'brand_color' => $tenant->brand_color,
+                ],
+            ]);
+        }
+
         $slug = str_replace('-', ' ', $username);
         
         $provider = User::where(function($q) use ($slug, $username) {
@@ -119,6 +146,76 @@ class PublicBookingController extends Controller
      */
     public function getAvailableSlots($username, Request $request, AvailabilityService $availabilityService)
     {
+        $dateStr = $request->query('date');
+        if (!$dateStr) {
+            return response()->json(['message' => 'Date parameter is required (Y-m-d).'], 400);
+        }
+
+        if ($username === 'team') {
+            $tenantId = session('tenant_id') ?? 1;
+            $providers = User::whereIn('role', ['staff', 'admin'])
+                ->where('tenant_id', $tenantId)
+                ->get();
+
+            $collectiveSlots = [];
+
+            foreach ($providers as $provider) {
+                $availability = $provider->availability;
+                if (!$availability) {
+                    continue;
+                }
+                $timezone = $availability->timezone ?? 'UTC';
+                $clientTimezone = $request->query('timezone', $timezone);
+
+                $carbonDate = Carbon::parse($dateStr);
+                $dayOfWeek = strtolower($carbonDate->englishDayOfWeek);
+                
+                $workingHours = $availability->working_hours ?? [
+                    'monday' => ['start' => '09:00', 'end' => '17:00'],
+                    'tuesday' => ['start' => '09:00', 'end' => '17:00'],
+                    'wednesday' => ['start' => '09:00', 'end' => '17:00'],
+                    'thursday' => ['start' => '09:00', 'end' => '17:00'],
+                    'friday' => ['start' => '09:00', 'end' => '17:00'],
+                ];
+
+                if (!isset($workingHours[$dayOfWeek])) {
+                    continue; // This provider doesn't work this day
+                }
+
+                $hours = $workingHours[$dayOfWeek];
+                $start = Carbon::parse($dateStr . ' ' . $hours['start'], $timezone);
+                $end = Carbon::parse($dateStr . ' ' . $hours['end'], $timezone);
+
+                $current = $start->copy();
+
+                while ($current->copy()->addMinutes(30)->lte($end)) {
+                    $slotStart = $current->copy();
+                    $slotEnd = $current->copy()->addMinutes(30);
+
+                    $check = $availabilityService->checkAvailability($provider, $slotStart, $slotEnd);
+
+                    $key = $slotStart->toIso8601String();
+                    if (!isset($collectiveSlots[$key])) {
+                        $collectiveSlots[$key] = [
+                            'start' => $slotStart->toIso8601String(),
+                            'end' => $slotEnd->toIso8601String(),
+                            'time_label' => $slotStart->copy()->setTimezone($clientTimezone)->format('g:i A'),
+                            'available' => false,
+                            'reason' => 'No staff available'
+                        ];
+                    }
+
+                    if ($check['available']) {
+                        $collectiveSlots[$key]['available'] = true;
+                        $collectiveSlots[$key]['reason'] = null;
+                    }
+                }
+            }
+
+            ksort($collectiveSlots);
+            return response()->json(array_values($collectiveSlots));
+        }
+
         $slug = str_replace('-', ' ', $username);
         $provider = User::where(function($q) use ($slug, $username) {
             $q->where('name', 'like', "%{$slug}%")
@@ -127,11 +224,6 @@ class PublicBookingController extends Controller
 
         if (!$provider) {
             return response()->json(['message' => 'Provider not found.'], 404);
-        }
-
-        $dateStr = $request->query('date');
-        if (!$dateStr) {
-            return response()->json(['message' => 'Date parameter is required (Y-m-d).'], 400);
         }
 
         $availability = $provider->availability;
@@ -208,21 +300,69 @@ class PublicBookingController extends Controller
     public function bookSlot(Request $request, AvailabilityService $availabilityService, AiService $aiService, SequenceService $sequenceService)
     {
         $fields = $request->validate([
-            'provider_id' => ['required', 'exists:users,id'],
+            'provider_id' => ['required'], // can be user ID or 'team' / 0
             'start_time' => ['required', 'date'],
             'end_time' => ['required', 'date', 'after:start_time'],
             'client_name' => ['required', 'string', 'max:255'],
             'client_email' => ['required', 'email', 'max:255'],
             'notes' => ['nullable', 'string'],
+            'utm_source' => ['nullable', 'string'],
+            'utm_medium' => ['nullable', 'string'],
+            'utm_campaign' => ['nullable', 'string'],
+            'utm_term' => ['nullable', 'string'],
+            'utm_content' => ['nullable', 'string'],
         ]);
 
-        $provider = User::find($fields['provider_id']);
-        $tenantId = $provider->tenant_id ?? 1;
+        $isTeam = ($fields['provider_id'] == 0 || $fields['provider_id'] === 'team');
+        $tenantId = session('tenant_id') ?? 1;
 
-        // Check availability once more before creating booking to prevent double-booking race condition
-        $check = $availabilityService->checkAvailability($provider, $fields['start_time'], $fields['end_time']);
-        if (!$check['available']) {
-            return response()->json(['message' => 'The selected slot is no longer available: ' . $check['reason']], 422);
+        if ($isTeam) {
+            $providers = User::whereIn('role', ['staff', 'admin'])
+                ->where('tenant_id', $tenantId)
+                ->get();
+
+            $eligibleProviders = [];
+
+            foreach ($providers as $p) {
+                $check = $availabilityService->checkAvailability($p, $fields['start_time'], $fields['end_time']);
+                if ($check['available']) {
+                    $startOfDay = Carbon::parse($fields['start_time'])->startOfDay();
+                    $endOfDay = Carbon::parse($fields['start_time'])->endOfDay();
+                    
+                    $appointmentCount = Appointment::where('staff_id', $p->id)
+                        ->whereBetween('start_time', [$startOfDay, $endOfDay])
+                        ->count();
+
+                    $eligibleProviders[] = [
+                        'provider' => $p,
+                        'count' => $appointmentCount,
+                    ];
+                }
+            }
+
+            if (empty($eligibleProviders)) {
+                return response()->json(['message' => 'No team members are available for the selected timeslot.'], 422);
+            }
+
+            usort($eligibleProviders, function($a, $b) {
+                if ($a['count'] === $b['count']) {
+                    return $a['provider']->id <=> $b['provider']->id;
+                }
+                return $a['count'] <=> $b['count'];
+            });
+
+            $provider = $eligibleProviders[0]['provider'];
+        } else {
+            $provider = User::find($fields['provider_id']);
+            if (!$provider) {
+                return response()->json(['message' => 'Provider not found.'], 404);
+            }
+            $tenantId = $provider->tenant_id ?? 1;
+
+            $check = $availabilityService->checkAvailability($provider, $fields['start_time'], $fields['end_time']);
+            if (!$check['available']) {
+                return response()->json(['message' => 'The selected slot is no longer available: ' . $check['reason']], 422);
+            }
         }
 
         // 1. Resolve/Create Client profile scoped to the tenant
@@ -280,7 +420,12 @@ class PublicBookingController extends Controller
             'contact_id' => $contact->id,
             'value' => rand(10, 50) * 1000,
             'stage' => 'booked',
-            'tenant_id' => $tenantId
+            'tenant_id' => $tenantId,
+            'utm_source' => $fields['utm_source'] ?? null,
+            'utm_medium' => $fields['utm_medium'] ?? null,
+            'utm_campaign' => $fields['utm_campaign'] ?? null,
+            'utm_term' => $fields['utm_term'] ?? null,
+            'utm_content' => $fields['utm_content'] ?? null,
         ]);
 
         // Auto-score B2B lead
@@ -328,6 +473,39 @@ class PublicBookingController extends Controller
             $sequenceService->triggerAppointmentSequences($appointment);
         } catch (\Exception $e) {
             \Log::warning("Public booking notifications failed: " . $e->getMessage());
+        }
+
+        // Dispatch Webhook Event
+        try {
+            $webhookService = resolve(\App\Services\WebhookService::class);
+            $webhookService->dispatch('appointment.created', [
+                'event' => 'appointment.created',
+                'appointment_id' => $appointment->id,
+                'title' => $appointment->title,
+                'start_time' => $appointment->start_time->toIso8601String(),
+                'end_time' => $appointment->end_time->toIso8601String(),
+                'status' => $appointment->status,
+                'client' => [
+                    'name' => $client->name,
+                    'email' => $client->email,
+                ],
+                'staff' => [
+                    'name' => $provider->name,
+                    'email' => $provider->email,
+                ],
+                'deal' => [
+                    'id' => $deal->id,
+                    'title' => $deal->title,
+                    'value' => $deal->value,
+                    'stage' => $deal->stage,
+                    'utm_source' => $deal->utm_source,
+                    'utm_medium' => $deal->utm_medium,
+                ],
+                'tenant_id' => $tenantId,
+                'timestamp' => now()->toIso8601String()
+            ], $tenantId);
+        } catch (\Exception $e) {
+            \Log::warning("Webhook dispatch failed during public booking: " . $e->getMessage());
         }
 
         return response()->json([
