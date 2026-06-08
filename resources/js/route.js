@@ -19,6 +19,11 @@ const isWorkspaceDomain = () => {
         return parts.length > 1 && parts[0] !== '127' && parts[0] !== 'localhost';
     }
     
+    // Handle Vercel deployments (e.g. app-name.vercel.app is main, acme.app-name.vercel.app is workspace)
+    if (host.endsWith('vercel.app')) {
+        return parts.length >= 4 && !['www', 'app', 'api'].includes(parts[0]);
+    }
+    
     if (parts.length >= 3) {
         return !['www', 'app', 'api'].includes(parts[0]);
     }

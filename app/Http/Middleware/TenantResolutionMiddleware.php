@@ -33,11 +33,21 @@ class TenantResolutionMiddleware
                     $tenant = Tenant::where('slug', $subdomain)->first();
                 }
             } else {
-                // E.g. acme.nexa.co -> parts = ['acme', 'nexa', 'co']
-                if (count($parts) >= 3) {
-                    $subdomain = $parts[0];
-                    if (!in_array($subdomain, ['www', 'app', 'api'])) {
-                        $tenant = Tenant::where('slug', $subdomain)->first();
+                // Handle Vercel deployments (e.g. app-name.vercel.app is main, acme.app-name.vercel.app is workspace)
+                if (str_ends_with($host, 'vercel.app')) {
+                    if (count($parts) >= 4) {
+                        $subdomain = $parts[0];
+                        if (!in_array($subdomain, ['www', 'app', 'api'])) {
+                            $tenant = Tenant::where('slug', $subdomain)->first();
+                        }
+                    }
+                } else {
+                    // E.g. acme.nexa.co -> parts = ['acme', 'nexa', 'co']
+                    if (count($parts) >= 3) {
+                        $subdomain = $parts[0];
+                        if (!in_array($subdomain, ['www', 'app', 'api'])) {
+                            $tenant = Tenant::where('slug', $subdomain)->first();
+                        }
                     }
                 }
             }
