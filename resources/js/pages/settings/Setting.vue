@@ -308,10 +308,10 @@ onMounted(() => {
         <div class="container-fluid">
             <div class="row">
                 <div class="col-lg-12">
-                    <div class="card glass-card border-0 p-0 overflow-hidden">
+                    <div class="card glass-card border-0 p-0 overflow-hidden settings-card">
                         <div class="row no-gutters">
                             <!-- Left Sidebar Navigation -->
-                            <div class="col-md-3 border-right settings-sidebar-container" style="border-color: var(--border-dark) !important; background-color: rgba(9, 13, 22, 0.15);">
+                            <div class="col-md-3 border-right settings-sidebar-container" style="border-color: var(--border-dark) !important; background-color: var(--bg-dark-accent) !important;">
                                 <div class="p-4">
                                     <h6 class="text-uppercase text-muted font-weight-bold mb-3 px-2" style="font-size: 11px; letter-spacing: 1.5px; opacity: 0.8;">Workspace Settings</h6>
                                     <div class="nav-pills-custom">

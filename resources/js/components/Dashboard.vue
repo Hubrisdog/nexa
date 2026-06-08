@@ -690,28 +690,23 @@ const getStatusClass = (status) => {
     <!-- Onboarding Setup Wizard -->
     <onboarding-wizard v-if="showOnboarding" :user="currentUser" @close="showOnboarding = false" />
 
-    <!-- Booking Page Preview Modal -->
-    <div v-if="showBookingPreview" class="modal-backdrop-blur d-flex align-items-center justify-content-center" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(9, 13, 22, 0.85); backdrop-filter: blur(12px); z-index: 1050; padding: 20px;">
-        <div class="card glass-card border-0 p-4" style="width: 100%; max-width: 1100px; height: 90vh; background: var(--bg-dark-card); border: 1px solid var(--border-dark) !important; border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); display: flex; flex-direction: column;">
-            <!-- Modal Header -->
-            <div class="d-flex justify-content-between align-items-center mb-3 flex-shrink-0">
-                <div class="d-flex align-items-center gap-2">
-                    <span class="badge px-2.5 py-1" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 6px; font-weight: 700; font-size: 11px;">LIVE PREVIEW</span>
-                    <h4 class="font-weight-extrabold m-0" style="font-size: 20px; color: var(--text-primary); letter-spacing: -0.5px;">
-                        Public Booking Page
-                    </h4>
-                </div>
-                <div class="d-flex align-items-center gap-3">
-                    <a :href="bookingPageUrl" target="_blank" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1.5" style="border-radius: 8px; font-weight: 600; font-size: 12px; padding: 6px 12px; border-color: var(--border-dark) !important; text-decoration: none; color: var(--text-primary);">
-                        <i class="fas fa-external-link-alt text-indigo" style="font-size: 12px;"></i> Open in New Tab
-                    </a>
-                    <button class="btn btn-link text-muted p-0" @click="showBookingPreview = false" style="font-size: 18px; border: 0; background: none; outline: none; cursor: pointer;"><i class="fas fa-times"></i></button>
-                </div>
+    <!-- Slide-over Booking Preview Drawer -->
+    <div v-if="showBookingPreview" class="drawer-backdrop" @click="showBookingPreview = false"></div>
+    <div class="drawer-right drawer-wide animate-slide-in" :class="{ 'open': showBookingPreview }" style="background-color: var(--bg-dark-card) !important; border-left: 1px solid var(--border-dark) !important; height: 100vh;">
+        <div class="drawer-header d-flex justify-content-between align-items-center p-3 border-bottom" style="border-color: var(--border-dark) !important; background-color: rgba(17, 24, 39, 0.4) !important;">
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge px-2.5 py-1" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 6px; font-weight: 700; font-size: 11px;">LIVE PREVIEW</span>
+                <h5 class="font-weight-extrabold mb-0 text-white" style="font-size: 17px; letter-spacing: -0.5px;">Public Booking Page</h5>
             </div>
-            <!-- Modal Body (Iframe) -->
-            <div class="flex-grow-1 w-100 overflow-hidden rounded-lg position-relative" style="background-color: var(--bg-dark-accent); border: 1px solid var(--border-dark); border-radius: 12px;">
-                <iframe :src="bookingPageUrl" class="w-100 h-100 border-0" style="background-color: var(--bg-dark-accent);"></iframe>
+            <div class="d-flex align-items-center gap-2.5">
+                <a :href="bookingPageUrl" target="_blank" class="btn btn-xs btn-outline-secondary d-flex align-items-center gap-1.5" style="border-radius: 6px; font-weight: 600; font-size: 11px; padding: 4px 8px; border-color: var(--border-dark) !important; text-decoration: none; color: var(--text-primary);">
+                    <i class="fas fa-external-link-alt text-indigo" style="font-size: 11px;"></i> Open Tab
+                </a>
+                <button type="button" @click="showBookingPreview = false" class="close border-0 bg-transparent text-white" style="font-size: 24px; outline: none; cursor: pointer; line-height: 1;">&times;</button>
             </div>
+        </div>
+        <div class="drawer-body p-0 overflow-hidden position-relative flex-grow-1" style="background-color: var(--bg-dark-accent);">
+            <iframe :src="bookingPageUrl" class="w-100 h-100 border-0" style="background-color: var(--bg-dark-accent);"></iframe>
         </div>
     </div>
 

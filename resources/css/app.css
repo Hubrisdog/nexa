@@ -762,21 +762,22 @@ body {
 .nav-pills-custom {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
 }
 
 .nav-item-custom {
     display: flex;
     align-items: center;
-    padding: 12px 16px;
+    padding: 12px 18px;
     font-size: 14px;
     font-weight: 600;
     color: var(--text-secondary);
     background-color: transparent;
     border: 1px solid transparent;
+    border-left: 3px solid transparent;
     border-radius: 8px;
     cursor: pointer;
-    transition: var(--transition-fast);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     user-select: none;
     width: 100%;
     text-align: left;
@@ -784,19 +785,51 @@ body {
 
 .nav-item-custom:hover {
     color: var(--text-primary);
-    background-color: var(--bg-dark-hover);
+    background-color: rgba(255, 255, 255, 0.03);
+    border-left-color: rgba(99, 102, 241, 0.3);
+    padding-left: 20px;
 }
 
 .nav-item-custom.active {
     color: #ffffff;
-    background: var(--primary-gradient) !important;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+    background: rgba(99, 102, 241, 0.1) !important;
+    border-color: rgba(99, 102, 241, 0.15) !important;
+    border-left: 3px solid var(--primary-color) !important;
+    box-shadow: inset 0 0 10px rgba(99, 102, 241, 0.05);
 }
 
 .nav-item-custom i {
     font-size: 15px;
     width: 20px;
     text-align: center;
+}
+
+/* Settings card with subtle container glow */
+.settings-card {
+    border: 1px solid var(--border-dark) !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(99, 102, 241, 0.05) !important;
+}
+
+/* Premium input controls overhaul */
+.form-control-modern {
+    background-color: rgba(9, 13, 22, 0.5) !important;
+    border: 1px solid var(--border-dark) !important;
+    border-radius: 10px !important;
+    padding: 12px 16px !important;
+    font-size: 14px !important;
+    color: var(--text-primary) !important;
+    transition: all 0.2s ease-in-out !important;
+}
+
+.form-control-modern:hover {
+    border-color: rgba(99, 102, 241, 0.4) !important;
+    background-color: rgba(9, 13, 22, 0.7) !important;
+}
+
+.form-control-modern:focus {
+    border-color: var(--primary-color) !important;
+    background-color: var(--bg-dark-accent) !important;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15) !important;
 }
 
 /* Mobile responsiveness: Horizontal scrolling on small screens */
@@ -825,8 +858,34 @@ body {
         font-size: 13px;
         background-color: var(--bg-dark-hover);
         border: 1px solid var(--border-dark);
+        border-left: 1px solid var(--border-dark) !important;
+    }
+    .nav-item-custom:hover {
+        padding-left: 14px;
+        background-color: var(--bg-dark-hover);
     }
     .nav-item-custom.active {
-        border-color: var(--primary-color);
+        border-color: var(--primary-color) !important;
+        border-left: 1px solid var(--primary-color) !important;
+        background: var(--primary-gradient) !important;
+    }
+}
+
+/* Wide drawer layout for previews */
+.drawer-wide {
+    width: 750px !important;
+    right: -750px !important;
+}
+.drawer-wide.open {
+    right: 0 !important;
+}
+
+@media (max-width: 767.98px) {
+    .drawer-wide {
+        width: 100% !important;
+        right: -100% !important;
+    }
+    .drawer-wide.open {
+        right: 0 !important;
     }
 }
