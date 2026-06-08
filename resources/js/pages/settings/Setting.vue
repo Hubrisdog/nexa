@@ -307,39 +307,46 @@ onMounted(() => {
     <div class="content">
         <div class="container-fluid">
             <div class="row">
-                <div class="col-lg-9">
-                    <div class="card glass-card border-0 p-4">
-                        <!-- Custom Premium Tabs -->
-                        <div class="nav-tabs-custom">
-                            <span @click="activeTab = 'general'" class="tab-link" :class="{ 'active': activeTab === 'general' }">
-                                <i class="fas fa-sliders-h mr-2"></i> General Details
-                            </span>
-                            <span @click="activeTab = 'hours'" class="tab-link" :class="{ 'active': activeTab === 'hours' }">
-                                <i class="far fa-clock mr-2"></i> Working Hours
-                            </span>
-                            <span @click="activeTab = 'notifications'" class="tab-link" :class="{ 'active': activeTab === 'notifications' }">
-                                <i class="far fa-bell mr-2"></i> Email alerts
-                            </span>
-                            <span @click="activeTab = 'calendar'" class="tab-link" :class="{ 'active': activeTab === 'calendar' }">
-                                <i class="far fa-calendar-alt mr-2"></i> Calendar Sync
-                            </span>
-                            <span @click="activeTab = 'branding'" class="tab-link" :class="{ 'active': activeTab === 'branding' }">
-                                <i class="fas fa-paint-brush mr-2"></i> Branding & Logo
-                            </span>
-                            <span @click="activeTab = 'webhooks'" class="tab-link" :class="{ 'active': activeTab === 'webhooks' }">
-                                <i class="fas fa-code mr-2"></i> Webhooks
-                            </span>
-                            <span @click="activeTab = 'ssl'" class="tab-link" :class="{ 'active': activeTab === 'ssl' }">
-                                <i class="fas fa-shield-alt mr-2"></i> Domains & SSL
-                            </span>
-                            <span @click="activeTab = 'billing'" class="tab-link" :class="{ 'active': activeTab === 'billing' }">
-                                <i class="fas fa-credit-card mr-2"></i> Billing & Plan
-                            </span>
-                        </div>
-
-                        <div v-if="isSuccess" class="alert alert-success mb-4" style="border-radius: 8px;">
-                            <i class="fas fa-check-circle mr-2"></i> Settings saved successfully.
-                        </div>
+                <div class="col-lg-12">
+                    <div class="card glass-card border-0 p-0 overflow-hidden">
+                        <div class="row no-gutters">
+                            <!-- Left Sidebar Navigation -->
+                            <div class="col-md-3 border-right settings-sidebar-container" style="border-color: var(--border-dark) !important; background-color: rgba(9, 13, 22, 0.15);">
+                                <div class="p-4">
+                                    <h6 class="text-uppercase text-muted font-weight-bold mb-3 px-2" style="font-size: 11px; letter-spacing: 1.5px; opacity: 0.8;">Workspace Settings</h6>
+                                    <div class="nav-pills-custom">
+                                        <span @click="activeTab = 'general'" class="nav-item-custom" :class="{ 'active': activeTab === 'general' }">
+                                            <i class="fas fa-sliders-h mr-2"></i> General Details
+                                        </span>
+                                        <span @click="activeTab = 'hours'" class="nav-item-custom" :class="{ 'active': activeTab === 'hours' }">
+                                            <i class="far fa-clock mr-2"></i> Working Hours
+                                        </span>
+                                        <span @click="activeTab = 'notifications'" class="nav-item-custom" :class="{ 'active': activeTab === 'notifications' }">
+                                            <i class="far fa-bell mr-2"></i> Email alerts
+                                        </span>
+                                        <span @click="activeTab = 'calendar'" class="nav-item-custom" :class="{ 'active': activeTab === 'calendar' }">
+                                            <i class="far fa-calendar-alt mr-2"></i> Calendar Sync
+                                        </span>
+                                        <span @click="activeTab = 'branding'" class="nav-item-custom" :class="{ 'active': activeTab === 'branding' }">
+                                            <i class="fas fa-paint-brush mr-2"></i> Branding & Logo
+                                        </span>
+                                        <span @click="activeTab = 'webhooks'" class="nav-item-custom" :class="{ 'active': activeTab === 'webhooks' }">
+                                            <i class="fas fa-code mr-2"></i> Webhooks
+                                        </span>
+                                        <span @click="activeTab = 'ssl'" class="nav-item-custom" :class="{ 'active': activeTab === 'ssl' }">
+                                            <i class="fas fa-shield-alt mr-2"></i> Domains & SSL
+                                        </span>
+                                        <span @click="activeTab = 'billing'" class="nav-item-custom" :class="{ 'active': activeTab === 'billing' }">
+                                            <i class="fas fa-credit-card mr-2"></i> Billing & Plan
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Right Form Body -->
+                            <div class="col-md-9 p-4">
+                                <div v-if="isSuccess" class="alert alert-success mb-4" style="border-radius: 8px;">
+                                    <i class="fas fa-check-circle mr-2"></i> Settings saved successfully.
+                                </div>
 
                         <!-- Tab Content Views -->
                         <form @submit.prevent="handleSave" v-if="activeTab !== 'calendar' && activeTab !== 'branding'">
@@ -789,6 +796,8 @@ onMounted(() => {
             </div>
         </div>
     </div>
+</div>
+</div>
 </template>
 
 <style scoped>

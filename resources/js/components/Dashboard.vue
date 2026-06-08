@@ -6,6 +6,7 @@ import OnboardingWizard from './OnboardingWizard.vue';
 
 const router = useRouter();
 const showOnboarding = ref(false);
+const showBookingPreview = ref(false);
 
 const stats = ref({
     total_appointments: 0,
@@ -510,9 +511,9 @@ const getStatusClass = (status) => {
                     <button @click="router.push('/admin/crm')" class="btn btn-outline-secondary d-flex align-items-center px-4" style="height: 48px; border-radius: 12px; font-weight: 600; gap: 8px;">
                         <i class="fas fa-phone-alt"></i> Call Next Lead
                     </button>
-                    <a :href="bookingPageUrl" target="_blank" class="btn btn-outline-info d-flex align-items-center px-4" style="height: 48px; border-radius: 12px; font-weight: 600; gap: 8px; border-color: var(--primary-color) !important; color: #ffffff; background: rgba(139, 92, 246, 0.1); text-decoration: none;">
+                    <button @click="showBookingPreview = true" class="btn btn-outline-info d-flex align-items-center px-4" style="height: 48px; border-radius: 12px; font-weight: 600; gap: 8px; border-color: var(--primary-color) !important; color: #ffffff; background: rgba(139, 92, 246, 0.1);">
                         <i class="fas fa-external-link-alt text-indigo"></i> View Booking Page
-                    </a>
+                    </button>
                 </div>
             </div>
         </div>
@@ -688,6 +689,31 @@ const getStatusClass = (status) => {
     
     <!-- Onboarding Setup Wizard -->
     <onboarding-wizard v-if="showOnboarding" :user="currentUser" @close="showOnboarding = false" />
+
+    <!-- Booking Page Preview Modal -->
+    <div v-if="showBookingPreview" class="modal-backdrop-blur d-flex align-items-center justify-content-center" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(9, 13, 22, 0.85); backdrop-filter: blur(12px); z-index: 1050; padding: 20px;">
+        <div class="card glass-card border-0 p-4" style="width: 100%; max-width: 1100px; height: 90vh; background: var(--bg-dark-card); border: 1px solid var(--border-dark) !important; border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); display: flex; flex-direction: column;">
+            <!-- Modal Header -->
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-shrink-0">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge px-2.5 py-1" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 6px; font-weight: 700; font-size: 11px;">LIVE PREVIEW</span>
+                    <h4 class="font-weight-extrabold m-0" style="font-size: 20px; color: var(--text-primary); letter-spacing: -0.5px;">
+                        Public Booking Page
+                    </h4>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <a :href="bookingPageUrl" target="_blank" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1.5" style="border-radius: 8px; font-weight: 600; font-size: 12px; padding: 6px 12px; border-color: var(--border-dark) !important; text-decoration: none; color: var(--text-primary);">
+                        <i class="fas fa-external-link-alt text-indigo" style="font-size: 12px;"></i> Open in New Tab
+                    </a>
+                    <button class="btn btn-link text-muted p-0" @click="showBookingPreview = false" style="font-size: 18px; border: 0; background: none; outline: none; cursor: pointer;"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+            <!-- Modal Body (Iframe) -->
+            <div class="flex-grow-1 w-100 overflow-hidden rounded-lg position-relative" style="background-color: var(--bg-dark-accent); border: 1px solid var(--border-dark); border-radius: 12px;">
+                <iframe :src="bookingPageUrl" class="w-100 h-100 border-0" style="background-color: var(--bg-dark-accent);"></iframe>
+            </div>
+        </div>
+    </div>
 
     <!-- Start Day Simulation Walkthrough Modal (Demo Mode Only) -->
     <div v-if="showStartDayModal" class="modal-backdrop-blur d-flex align-items-center justify-content-center" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(9, 13, 22, 0.85); backdrop-filter: blur(12px); z-index: 1050; padding: 20px;">
