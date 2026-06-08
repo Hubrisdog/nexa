@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen d-flex align-items-center justify-content-center py-5 px-3" :style="{ '--primary-color': brandColor, '--primary-rgb': brandRgb, 'background-color': 'var(--bg-dark-accent)', 'color': 'var(--text-primary)' }">
+    <div class="min-h-screen d-flex flex-column align-items-center justify-content-center py-5 px-3" :style="{ '--primary-color': brandColor, '--primary-rgb': brandRgb, 'background-color': 'var(--bg-dark-accent)', 'color': 'var(--text-primary)' }">
         <div class="card glass-card border-0 p-4 shadow-lg w-100" style="max-width: 820px; border-radius: var(--border-radius-lg);">
             
             <!-- Admin Dashboard Shortcut Banner -->
