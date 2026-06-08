@@ -267,6 +267,14 @@
             </div>
         </div>
 
+        <!-- Subtle Admin Access Portal Link -->
+        <div class="w-100 text-center mt-4" style="z-index: 10;">
+            <router-link to="/login" class="text-muted text-xs d-flex align-items-center justify-content-center gap-1 hover-light" style="text-decoration: none; transition: all 0.2s;">
+                <i class="fas fa-lock" style="font-size: 10px;"></i>
+                <span>Admin Access Portal</span>
+            </router-link>
+        </div>
+
         <!-- Floating AI Assistant Chat Widget -->
         <div v-if="isDemoMode" class="ai-assistant-widget" style="position: fixed; bottom: 30px; right: 30px; z-index: 1000; font-family: sans-serif;">
             <!-- Floating Chat Icon Trigger -->
@@ -808,6 +816,13 @@ export default {
 </script>
 
 <style scoped>
+.hover-light {
+    color: var(--text-secondary) !important;
+}
+.hover-light:hover {
+    color: var(--text-primary) !important;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+}
 .min-h-screen {
     min-height: 100vh;
 }
