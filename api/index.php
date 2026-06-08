@@ -11,6 +11,10 @@ if (getenv('VERCEL') === '1' || getenv('APP_ENV') === 'production') {
     $_ENV['APP_URL'] = $appUrl;
     $_SERVER['APP_URL'] = $appUrl;
 
+    // Prevent Symfony from stripping '/api' from request paths in Vercel subdirectory functions
+    $_SERVER['SCRIPT_NAME'] = '/index.php';
+    $_SERVER['PHP_SELF'] = '/index.php';
+
     $targetDb = '/tmp/database.sqlite';
     $sourceDb = __DIR__ . '/../database/database.sqlite';
     
