@@ -115,6 +115,14 @@ class PublicBookingController extends Controller
     {
         $tenantId = session('tenant_id');
         if (!$tenantId) {
+            $firstTenant = \App\Models\Tenant::first();
+            if ($firstTenant) {
+                $tenantId = $firstTenant->id;
+                session(['tenant_id' => $tenantId]);
+            }
+        }
+
+        if (!$tenantId) {
             return response()->json(['message' => 'Workspace not found.'], 404);
         }
 
