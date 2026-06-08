@@ -9,12 +9,31 @@ const password = ref('');
 const errors = ref({});
 const generalError = ref('');
 const isLoading = ref(false);
+const isAutoFilling = ref(false);
 
-const autoFillDemo = () => {
-    email.value = 'admin@example.com';
-    password.value = 'password';
+const autoFillDemo = async () => {
+    if (isAutoFilling.value) return;
+    isAutoFilling.value = true;
     generalError.value = '';
     errors.value = {};
+    
+    const targetEmail = 'admin@example.com';
+    const targetPassword = 'password';
+    
+    email.value = '';
+    for (let i = 0; i < targetEmail.length; i++) {
+        email.value += targetEmail[i];
+        await new Promise(resolve => setTimeout(resolve, 25 + Math.random() * 15));
+    }
+    
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    password.value = '';
+    for (let i = 0; i < targetPassword.length; i++) {
+        password.value += targetPassword[i];
+        await new Promise(resolve => setTimeout(resolve, 25 + Math.random() * 15));
+    }
+    isAutoFilling.value = false;
 };
 
 const loginWithGoogle = () => {
@@ -110,7 +129,7 @@ const handleLogin = async () => {
                     <div v-if="errors.password" class="error-feedback">{{ errors.password[0] }}</div>
                 </div>
 
-                <button type="submit" class="btn-gradient w-100 py-3 mb-3" :disabled="isLoading">
+                <button type="submit" class="btn-gradient w-100 py-3 mb-3" :disabled="isLoading || isAutoFilling">
                     <span v-if="isLoading"><i class="fas fa-spinner fa-spin mr-2"></i> Signing In...</span>
                     <span v-else>Sign In</span>
                 </button>
@@ -121,7 +140,7 @@ const handleLogin = async () => {
                     <hr class="flex-grow-1 border-secondary" style="opacity: 0.15;" />
                 </div>
 
-                <button type="button" @click="loginWithGoogle" class="btn-google w-100 mb-3" :disabled="isLoading">
+                <button type="button" @click="loginWithGoogle" class="btn-google w-100 mb-3" :disabled="isLoading || isAutoFilling">
                     <svg class="google-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                         <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -131,8 +150,8 @@ const handleLogin = async () => {
                     <span>Google</span>
                 </button>
 
-                <button type="button" @click="autoFillDemo" class="btn-glass-secondary mb-3">
-                    <i class="fas fa-magic text-primary-color"></i> Auto-fill Demo Admin
+                <button type="button" @click="autoFillDemo" class="btn-glass-secondary mb-3" :disabled="isLoading || isAutoFilling">
+                    <i class="fas fa-magic text-primary-color" :class="{ 'fa-spin': isAutoFilling }"></i> Auto-fill Demo Admin
                 </button>
 
                 <p class="auth-footer text-center mt-3 mb-0">
