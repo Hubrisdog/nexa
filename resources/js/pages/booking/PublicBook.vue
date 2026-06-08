@@ -277,8 +277,14 @@
                             <p class="text-sm m-0">No available timeslots on this day.</p>
                         </div>
                         
-                        <div v-else class="text-center py-5 text-muted">
-                            <p class="text-sm">Please pick a date to see availability.</p>
+                        <div v-else class="text-center py-4 text-muted rounded-lg border border-dashed p-3" style="border-color: var(--border-dark) !important; background-color: rgba(9, 13, 22, 0.2);">
+                            <i class="far fa-calendar-alt fa-lg mb-2 text-indigo"></i>
+                            <p class="text-sm mb-3">Please pick a date to see availability.</p>
+                            <div class="slots-grid-placeholder" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; opacity: 0.25;">
+                                <div v-for="mock in ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM']" :key="mock" class="btn btn-dark disabled py-2 px-3 text-sm text-center" style="border-radius: 8px; border-color: var(--border-dark); cursor: not-allowed;">
+                                    {{ mock }}
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
