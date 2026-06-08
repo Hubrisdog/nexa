@@ -1,9 +1,9 @@
 <template>
-    <div class="min-h-screen d-flex flex-column align-items-center justify-content-center py-5 px-3" :style="{ '--primary-color': brandColor, '--primary-rgb': brandRgb, 'background-color': 'var(--bg-dark-accent)', 'color': 'var(--text-primary)' }">
-        <div class="card glass-card border-0 p-4 shadow-lg w-100" style="max-width: 820px; border-radius: var(--border-radius-lg);">
+    <div class="min-h-screen d-flex flex-column align-items-center justify-content-center" :class="isInIframe ? 'p-2' : 'py-5 px-3'" :style="{ '--primary-color': brandColor, '--primary-rgb': brandRgb, 'background-color': 'var(--bg-dark-accent)', 'color': 'var(--text-primary)' }">
+        <div class="card glass-card w-100" :class="isInIframe ? 'p-3 border-0 rounded-0 shadow-none' : 'p-4 shadow-lg border-0'" :style="isInIframe ? { 'background': 'transparent', 'max-width': '820px' } : { 'border-radius': 'var(--border-radius-lg)', 'max-width': '820px' }">
             
             <!-- Admin Dashboard Shortcut Banner -->
-            <div v-if="isAuthenticated" class="mb-4 p-3 rounded-lg border d-flex justify-content-between align-items-center flex-wrap gap-2" style="background: rgba(139, 92, 246, 0.08); border-color: rgba(139, 92, 246, 0.25) !important;">
+            <div v-if="isAuthenticated && !isInIframe" class="mb-4 p-3 rounded-lg border d-flex justify-content-between align-items-center flex-wrap gap-2" style="background: rgba(139, 92, 246, 0.08); border-color: rgba(139, 92, 246, 0.25) !important;">
                 <div class="text-left">
                     <span class="badge text-xs py-1 px-2.5 mr-2 text-white" style="background: var(--primary-color); font-weight: 700; border-radius: 6px;">ADMINISTRATOR</span>
                     <span class="text-sm font-weight-bold text-white">Logged in as {{ currentUser?.name || 'Admin User' }}</span>
@@ -16,7 +16,7 @@
             </div>
             
             <!-- Demo Mode Alert Banner & Magic Booking Simulator controls -->
-            <div v-if="isDemoMode" class="mb-4 p-3 rounded-lg border d-flex justify-content-between align-items-center flex-wrap gap-2" style="background: rgba(99, 102, 241, 0.08); border-color: rgba(99, 102, 241, 0.25) !important;">
+            <div v-if="isDemoMode && !isInIframe" class="mb-4 p-3 rounded-lg border d-flex justify-content-between align-items-center flex-wrap gap-2" style="background: rgba(99, 102, 241, 0.08); border-color: rgba(99, 102, 241, 0.25) !important;">
                 <div class="text-left">
                     <span class="badge badge-indigo text-xs py-1 px-2.5 mr-2 animate-pulse text-white" style="background: var(--primary-color);">SIMULATOR</span>
                     <span class="text-sm font-weight-bold text-white">Interactive Demo Mode</span>
@@ -330,7 +330,7 @@
         </div>
 
         <!-- Subtle Admin Access Portal Link -->
-        <div class="w-100 text-center mt-4" style="z-index: 10;">
+        <div v-if="!isInIframe" class="w-100 text-center mt-4" style="z-index: 10;">
             <router-link to="/login" class="text-muted text-xs d-flex align-items-center justify-content-center gap-1 hover-light" style="text-decoration: none; transition: all 0.2s;">
                 <i class="fas fa-lock" style="font-size: 10px;"></i>
                 <span>Admin Access Portal</span>
@@ -338,7 +338,7 @@
         </div>
 
         <!-- Floating AI Assistant Chat Widget -->
-        <div v-if="isDemoMode" class="ai-assistant-widget" style="position: fixed; bottom: 30px; right: 30px; z-index: 1000; font-family: sans-serif;">
+        <div v-if="isDemoMode && !isInIframe" class="ai-assistant-widget" style="position: fixed; bottom: 30px; right: 30px; z-index: 1000; font-family: sans-serif;">
             <!-- Floating Chat Icon Trigger -->
             <button v-if="!showAiChat" @click="showAiChat = true" class="btn btn-primary d-flex align-items-center justify-content-center shadow-lg" style="width: 56px; height: 56px; border-radius: 50%; background: var(--primary-gradient); border: 0; box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4) !important;">
                 <i class="fas fa-robot text-white" style="font-size: 24px;"></i>
@@ -454,6 +454,7 @@ export default {
             bookedAppointment: null,
             bookingEmail: '',
             clientTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+            isInIframe: window.self !== window.top,
             // Simulator additions
             magicBookingInProgress: false,
             magicBookingLogs: [],
