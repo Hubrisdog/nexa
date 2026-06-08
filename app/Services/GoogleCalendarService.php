@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Appointment;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Helpers\Demo;
 
 class GoogleCalendarService
 {
@@ -24,6 +25,10 @@ class GoogleCalendarService
      */
     public function syncAppointment(Appointment $appointment, $action = 'create')
     {
+        if (Demo::active()) {
+            return Demo::mock('google_calendar_sync', compact('appointment', 'action'));
+        }
+
         $provider = $appointment->staff;
         $connection = $provider ? $provider->calendarConnections()->where('provider', 'google')->first() : null;
 

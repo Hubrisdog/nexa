@@ -568,14 +568,13 @@ onMounted(() => {
             <!-- Filter Bar (Only shown in list view) -->
             <div v-if="currentView === 'list'" class="row mb-4">
                 <div class="col-md-8 mb-3 mb-md-0">
-                    <div class="input-group-custom bg-white shadow-sm" style="height: 48px; background-color: var(--bg-dark-card) !important; border: 1px solid var(--border-dark);">
+                    <div class="input-group-custom shadow-sm">
                         <span class="input-icon"><i class="fas fa-search text-muted"></i></span>
                         <input 
                             v-model="search" 
                             @input="handleSearch" 
                             type="text" 
-                            class="form-control-custom w-100" 
-                            style="background: transparent !important; color: var(--text-primary) !important;"
+                            class="form-control-custom" 
                             placeholder="Search reservations by client name, provider name, or service title..."
                         >
                     </div>

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Appointment;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Helpers\Demo;
 
 class MailService
 {
@@ -70,6 +71,10 @@ class MailService
      */
     protected function send(string $to, string $subject, string $body): bool
     {
+        if (Demo::active()) {
+            return Demo::mock('mail_send', compact('to', 'subject', 'body'));
+        }
+
         if (empty($this->apiKey) || $this->provider === 'log') {
             Log::info("--- TRANSACTIONAL EMAIL OUTBOX (MOCK) ---\n" .
                      "To: {$to}\n" .

@@ -7,6 +7,7 @@ use App\Models\Appointment;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
+use App\Helpers\Demo;
 
 class AvailabilityService
 {
@@ -111,6 +112,8 @@ class AvailabilityService
 
         $existingAppointments = Appointment::where('staff_id', $provider->id)
             ->where('status', '!=', 'cancelled')
+            ->where('start_time', '<', $end)
+            ->where('end_time', '>', $start->copy()->subMinutes($bufferMinutes))
             ->when($excludeAppointmentId, function ($q) use ($excludeAppointmentId) {
                 $q->where('id', '!=', $excludeAppointmentId);
             })
@@ -153,7 +156,7 @@ class AvailabilityService
      */
     protected function checkExternalGoogleConflicts($connection, $googleService, $start, $end): bool
     {
-        if (str_starts_with($connection->access_token, 'mock-')) {
+        if (Demo::active() || str_starts_with($connection->access_token, 'mock-')) {
             // Simulated conflict for 13:00 (1:00 PM) to facilitate local testing
             if ($start->hour === 13) {
                 Log::info("Availability check mock calendar conflict triggered for 13:00.");

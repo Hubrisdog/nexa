@@ -7,6 +7,7 @@ use App\Models\UserCalendarConnection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Helpers\Demo;
 
 class OAuthController extends Controller
 {
@@ -16,6 +17,10 @@ class OAuthController extends Controller
      */
     public function googleRedirect()
     {
+        if (Demo::active()) {
+            return redirect('/demo/oauth/google');
+        }
+
         $clientId = env('GOOGLE_CALENDAR_CLIENT_ID');
         $clientSecret = env('GOOGLE_CALENDAR_CLIENT_SECRET');
 
@@ -59,11 +64,6 @@ class OAuthController extends Controller
     {
         $code = $request->query('code');
         $user = auth()->user();
-
-        // If not logged in, we try to resolve the first admin user for test scripts
-        if (!$user) {
-            $user = \App\Models\User::where('role', 'admin')->first();
-        }
 
         if (!$user) {
             return redirect('/login');

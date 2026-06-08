@@ -7,12 +7,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Nexa | Dashboard</title>
 
+    <script>
+        window.NexaUser = @json(auth()->user() ? auth()->user()->load('tenant') : null);
+    </script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
 </head>
 
 <body class="hold-transition sidebar-mini">
     <div class="wrapper" id="app">
+
+        <!-- Logout Overlay -->
+        <div v-if="isLoggingOut" class="logout-overlay">
+            <div class="spinner-border text-indigo mb-3" style="width: 3rem; height: 3rem;" role="status">
+                <span class="sr-only">Securing session...</span>
+            </div>
+            <h4 class="font-weight-bold text-white mb-1" style="font-size: 22px; letter-spacing: -0.5px;">Signing out securely</h4>
+            <p class="text-muted text-sm">Clearing credentials and redirecting to login portal...</p>
+        </div>
 
         <!-- Top Header Navbar -->
         <nav v-if="$route.name !== 'login' && $route.name !== 'register'" class="main-header navbar navbar-expand navbar-white navbar-light">
@@ -80,6 +92,22 @@
                     </div>
                     <div class="info ml-2">
                         <router-link to="/admin/profile" class="d-block font-weight-bold" style="color: #cbd5e1; font-size: 14px;">@{{ currentUser?.name || 'Admin User' }}</router-link>
+                    </div>
+                </div>
+
+                <!-- Demo Mode Warning Banner -->
+                <div v-if="currentUser?.tenant?.is_demo || currentUser?.tenant_id === 999" class="px-3 mb-3">
+                    <div class="p-3 text-center" style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: var(--border-radius-md); backdrop-filter: blur(4px);">
+                        <div class="text-warning font-weight-bold text-sm mb-1">
+                            <i class="fas fa-flask mr-1"></i> Demo Mode
+                        </div>
+                        <div class="text-muted text-xs mb-2">
+                            Changes are not saved permanently.
+                        </div>
+                        <button @click.prevent="resetDemoData" :disabled="isResettingDemo" class="btn btn-xs btn-outline-warning w-100 py-1" style="font-size: 11px; font-weight: 600; border-radius: 6px; cursor: pointer;">
+                            <span v-if="isResettingDemo"><i class="fas fa-spinner fa-spin mr-1"></i> Resetting...</span>
+                            <span v-else><i class="fas fa-undo mr-1"></i> Reset Demo Data</span>
+                        </button>
                     </div>
                 </div>
 

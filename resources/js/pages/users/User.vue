@@ -148,7 +148,7 @@ onMounted(() => {
             <!-- Filter Grid -->
             <div class="row mb-4">
                 <div class="col-md-8 mb-3 mb-md-0">
-                    <div class="input-group-custom bg-white shadow-sm" style="height: 48px;">
+                    <div class="input-group-custom shadow-sm">
                         <span class="input-icon"><i class="fas fa-search"></i></span>
                         <input 
                             v-model="search" 
@@ -160,7 +160,7 @@ onMounted(() => {
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <select v-model="roleFilter" @change="handleRoleFilter" class="form-control shadow-sm" style="height: 48px; border-radius: 10px; border: 1px solid #cbd5e1; padding: 10px; font-weight: 500; font-size: 14.5px;">
+                    <select v-model="roleFilter" @change="handleRoleFilter" class="form-control shadow-sm" style="height: 48px; border-radius: 10px; border: 1px solid var(--border-dark); padding: 10px; font-weight: 500; font-size: 14.5px;">
                         <option value="all">All System Roles</option>
                         <option value="admin">Administrators</option>
                         <option value="staff">Staff Members / Providers</option>
@@ -191,7 +191,7 @@ onMounted(() => {
                                             {{ getInitials(user.name) }}
                                         </div>
                                         <div>
-                                            <span class="font-weight-bold d-block mb-0 text-sm" style="color: #0f172a;">{{ user.name }}</span>
+                                            <span class="font-weight-bold d-block mb-0 text-sm" style="color: var(--text-primary);">{{ user.name }}</span>
                                             <span class="text-muted d-block small">{{ user.email }}</span>
                                         </div>
                                     </div>
@@ -221,7 +221,7 @@ onMounted(() => {
                     </table>
                 </div>
 
-                <div v-if="pagination.last_page > 1" class="card-footer bg-white border-0 d-flex justify-content-between align-items-center" style="border-radius: 0 0 16px 16px; padding: 18px 20px;">
+                <div v-if="pagination.last_page > 1" class="card-footer border-0 d-flex justify-content-between align-items-center" style="background-color: var(--bg-dark-card) !important; border-top: 1px solid var(--border-dark) !important; border-radius: 0 0 16px 16px; padding: 18px 20px;">
                     <div class="text-muted small">
                         Showing page {{ pagination.current_page }} of {{ pagination.last_page }}
                     </div>
@@ -243,7 +243,7 @@ onMounted(() => {
             <div v-if="isDrawerOpen" class="drawer-backdrop" @click="closeDrawer"></div>
             <div class="drawer-right" :class="{ 'open': isDrawerOpen }">
                 <div class="drawer-header">
-                    <h5 class="font-weight-bold mb-0" style="color: #0f172a; font-size: 18px;">
+                    <h5 class="font-weight-bold mb-0" style="color: var(--text-primary); font-size: 18px;">
                         {{ isEditing ? 'Edit User details' : 'Create User profile' }}
                     </h5>
                     <button type="button" @click="closeDrawer" class="close border-0 bg-transparent" style="font-size: 24px;">&times;</button>

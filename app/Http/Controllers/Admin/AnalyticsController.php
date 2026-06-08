@@ -40,10 +40,16 @@ class AnalyticsController extends Controller
         $providers = User::where('role', 'staff')->get();
         $providerMatrix = [];
 
+        $providerStats = Appointment::selectRaw("staff_id, status, count(*) as count")
+            ->groupBy('staff_id', 'status')
+            ->get()
+            ->groupBy('staff_id');
+
         foreach ($providers as $provider) {
-            $total = Appointment::where('staff_id', $provider->id)->count();
-            $completed = Appointment::where('staff_id', $provider->id)->where('status', 'completed')->count();
-            $cancelled = Appointment::where('staff_id', $provider->id)->where('status', 'cancelled')->count();
+            $stats = $providerStats->get($provider->id) ? $providerStats->get($provider->id)->pluck('count', 'status')->toArray() : [];
+            $completed = $stats['completed'] ?? 0;
+            $cancelled = $stats['cancelled'] ?? 0;
+            $total = array_sum($stats);
             
             $rate = $total > 0 ? round(($completed / $total) * 100, 1) : 0;
 
@@ -77,12 +83,17 @@ class AnalyticsController extends Controller
         }
 
         // 4. Deal Stages Distribution
+        $dealStats = Deal::selectRaw("stage, count(*) as count")
+            ->groupBy('stage')
+            ->pluck('count', 'stage')
+            ->toArray();
+
         $stages = ['cold', 'contacted', 'interested', 'booked', 'closed_won', 'closed_lost'];
         $stageDist = [];
         foreach ($stages as $stage) {
             $stageDist[] = [
                 'stage' => ucfirst(str_replace('_', ' ', $stage)),
-                'count' => Deal::where('stage', $stage)->count()
+                'count' => $dealStats[$stage] ?? 0
             ];
         }
 

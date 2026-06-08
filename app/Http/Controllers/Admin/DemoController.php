@@ -9,13 +9,25 @@ use App\Models\Contact;
 use App\Models\Deal;
 use App\Models\Activity;
 use App\Models\User;
+use App\Models\Tenant;
+use App\Helpers\Demo;
+use App\Services\DemoService;
 use App\Services\AiService;
 use App\Services\SequenceService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Artisan;
 
 class DemoController extends Controller
 {
+    protected $demoService;
+
+    public function __construct(DemoService $demoService)
+    {
+        $this->demoService = $demoService;
+    }
     /**
      * Simulates a full end-to-end client booking, CRM deal score, and calendar sync workflow.
      */
@@ -148,5 +160,78 @@ class DemoController extends Controller
             'deal' => $deal,
             'appointment' => $appointment,
         ]);
+    }
+
+    /**
+     * Automatically logs the user into the demo tenant and redirects to the dashboard.
+     */
+    public function autoLoginDemo(Request $request)
+    {
+        // 1. Create or Find Demo Tenant
+        $tenant = Tenant::firstOrCreate(
+            ['slug' => 'demo'],
+            [
+                'name' => 'Demo Workspace',
+                'plan' => 'enterprise',
+                'is_demo' => true,
+            ]
+        );
+
+        if (!$tenant->is_demo) {
+            $tenant->update(['is_demo' => true]);
+        }
+
+        // 2. Create Demo Admin User
+        $user = User::firstOrCreate(
+            ['email' => 'demo@example.com'],
+            [
+                'name' => 'Demo Administrator',
+                'password' => Hash::make('password'),
+                'role' => 'admin',
+                'tenant_id' => $tenant->id,
+            ]
+        );
+
+        // Ensure user is associated with demo tenant
+        if ($user->tenant_id !== $tenant->id) {
+            $user->update(['tenant_id' => $tenant->id]);
+        }
+
+        // 3. Seed demo data if the workspace is empty
+        if (Company::where('tenant_id', $tenant->id)->count() === 0) {
+            $this->demoService->resetWorkspace();
+        }
+
+        // 4. Log the user in using session auth
+        Auth::login($user);
+
+        // 5. Redirect straight to dashboard
+        return redirect('/admin/dashboard');
+    }
+
+    /**
+     * Renders the simulated local Google OAuth consent screen for Demo Mode.
+     */
+    public function googleConsentScreen()
+    {
+        return view('admin.demo-oauth-consent');
+    }
+
+    /**
+     * Triggers a safe database wipe and rebuild for the demo workspace.
+     */
+    public function resetDemoData(Request $request)
+    {
+        if (!Demo::active()) {
+            return response()->json(['message' => 'Demo reset is only available in demo mode.'], 403);
+        }
+
+        try {
+            $this->demoService->resetWorkspace();
+            return response()->json(['success' => true, 'message' => 'Demo workspace successfully reset.']);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Failed to reset demo data: " . $e->getMessage());
+            return response()->json(['message' => 'Failed to reset demo workspace: ' . $e->getMessage()], 500);
+        }
     }
 }

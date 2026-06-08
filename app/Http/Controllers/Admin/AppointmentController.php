@@ -64,8 +64,14 @@ class AppointmentController extends Controller
         }
 
         $fields = $request->validate([
-            'client_id' => ['required', 'exists:users,id'],
-            'staff_id' => ['required', 'exists:users,id'],
+            'client_id' => [
+                'required',
+                Rule::exists('users', 'id')->where('tenant_id', $user->tenant_id)
+            ],
+            'staff_id' => [
+                'required',
+                Rule::exists('users', 'id')->where('tenant_id', $user->tenant_id)
+            ],
             'title' => ['required', 'string', 'max:255'],
             'start_time' => ['required', 'date'],
             'end_time' => ['required', 'date', 'after:start_time'],
@@ -148,8 +154,14 @@ class AppointmentController extends Controller
         }
 
         $fields = $request->validate([
-            'client_id' => ['required', 'exists:users,id'],
-            'staff_id' => ['required', 'exists:users,id'],
+            'client_id' => [
+                'required',
+                Rule::exists('users', 'id')->where('tenant_id', $user->tenant_id)
+            ],
+            'staff_id' => [
+                'required',
+                Rule::exists('users', 'id')->where('tenant_id', $user->tenant_id)
+            ],
             'title' => ['required', 'string', 'max:255'],
             'start_time' => ['required', 'date'],
             'end_time' => ['required', 'date', 'after:start_time'],
@@ -211,13 +223,17 @@ class AppointmentController extends Controller
                 SyncCalendarJob::dispatch([
                     'id' => $appointment->id,
                     'google_event_id' => $oldGoogleId,
-                    'calendar_provider' => 'google'
+                    'calendar_provider' => 'google',
+                    'staff_id' => $appointment->staff_id,
+                    'client_id' => $appointment->client_id,
                 ], 'delete');
             } elseif ($oldProvider === 'outlook' && $oldOutlookId) {
                 SyncCalendarJob::dispatch([
                     'id' => $appointment->id,
                     'outlook_event_id' => $oldOutlookId,
-                    'calendar_provider' => 'outlook'
+                    'calendar_provider' => 'outlook',
+                    'staff_id' => $appointment->staff_id,
+                    'client_id' => $appointment->client_id,
                 ], 'delete');
             }
             // Create new event
@@ -264,6 +280,8 @@ class AppointmentController extends Controller
                 'google_event_id' => $appointment->google_event_id,
                 'outlook_event_id' => $appointment->outlook_event_id,
                 'calendar_provider' => $appointment->calendar_provider,
+                'staff_id' => $appointment->staff_id,
+                'client_id' => $appointment->client_id,
             ], 'delete');
         }
 

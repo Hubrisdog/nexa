@@ -79,4 +79,33 @@ class PublicBookingTest extends TestCase
                      'company'
                  ]);
     }
+
+    public function test_can_book_with_email_already_registered_in_different_tenant()
+    {
+        $tenant2 = Tenant::create(['name' => 'Second Tenant', 'slug' => 'second-tenant']);
+        
+        $provider2 = User::create([
+            'name' => 'Bob Provider',
+            'email' => 'bob@secondtenant.com',
+            'password' => bcrypt('password'),
+            'role' => 'staff',
+            'tenant_id' => $tenant2->id,
+        ]);
+
+        $monday = now()->next('Monday');
+
+        $response = $this->withSession(['tenant_id' => $tenant2->id])
+            ->postJson('/api/public/book', [
+                'provider_id' => $provider2->id,
+                'start_time' => $monday->copy()->setHour(11)->setMinute(0)->toIso8601String(),
+                'end_time' => $monday->copy()->setHour(11)->setMinute(30)->toIso8601String(),
+                'client_name' => 'John Client',
+                'client_email' => 'john.client@example.com',
+                'notes' => 'Booking under tenant 2.'
+            ]);
+
+        $response->assertStatus(201);
+
+        $this->assertEquals(2, User::withoutGlobalScope('tenant_scope')->where('email', 'john.client@example.com')->count());
+    }
 }

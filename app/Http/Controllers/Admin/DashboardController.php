@@ -17,14 +17,20 @@ class DashboardController extends Controller
         $todayEnd = now()->endOfDay();
         
         if ($user->role === 'client') {
-            $totalAppointments = Appointment::where('client_id', $user->id)->count();
+            $statusCounts = Appointment::where('client_id', $user->id)
+                ->selectRaw("status, count(*) as count")
+                ->groupBy('status')
+                ->pluck('count', 'status')
+                ->toArray();
+            
+            $completedCount = $statusCounts['completed'] ?? 0;
+            $cancelledCount = $statusCounts['cancelled'] ?? 0;
+            $scheduledCount = $statusCounts['scheduled'] ?? 0;
+            $confirmedCount = $statusCounts['confirmed'] ?? 0;
+            $totalAppointments = array_sum($statusCounts);
+            
             $totalClients = 1;
             $totalStaff = User::where('role', 'staff')->count();
-            
-            $completedCount = Appointment::where('client_id', $user->id)->where('status', 'completed')->count();
-            $cancelledCount = Appointment::where('client_id', $user->id)->where('status', 'cancelled')->count();
-            $scheduledCount = Appointment::where('client_id', $user->id)->where('status', 'scheduled')->count();
-            $confirmedCount = Appointment::where('client_id', $user->id)->where('status', 'confirmed')->count();
             
             $recentAppointments = Appointment::with(['client', 'staff'])
                 ->where('client_id', $user->id)
@@ -54,14 +60,20 @@ class DashboardController extends Controller
                 ->limit(8)
                 ->get();
         } elseif ($user->role === 'staff') {
-            $totalAppointments = Appointment::where('staff_id', $user->id)->count();
+            $statusCounts = Appointment::where('staff_id', $user->id)
+                ->selectRaw("status, count(*) as count")
+                ->groupBy('status')
+                ->pluck('count', 'status')
+                ->toArray();
+            
+            $completedCount = $statusCounts['completed'] ?? 0;
+            $cancelledCount = $statusCounts['cancelled'] ?? 0;
+            $scheduledCount = $statusCounts['scheduled'] ?? 0;
+            $confirmedCount = $statusCounts['confirmed'] ?? 0;
+            $totalAppointments = array_sum($statusCounts);
+
             $totalClients = Appointment::where('staff_id', $user->id)->distinct('client_id')->count('client_id');
             $totalStaff = User::where('role', 'staff')->count();
-            
-            $completedCount = Appointment::where('staff_id', $user->id)->where('status', 'completed')->count();
-            $cancelledCount = Appointment::where('staff_id', $user->id)->where('status', 'cancelled')->count();
-            $scheduledCount = Appointment::where('staff_id', $user->id)->where('status', 'scheduled')->count();
-            $confirmedCount = Appointment::where('staff_id', $user->id)->where('status', 'confirmed')->count();
             
             $recentAppointments = Appointment::with(['client', 'staff'])
                 ->where('staff_id', $user->id)
@@ -91,14 +103,19 @@ class DashboardController extends Controller
                 ->limit(8)
                 ->get();
         } else {
-            $totalAppointments = Appointment::count();
+            $statusCounts = Appointment::selectRaw("status, count(*) as count")
+                ->groupBy('status')
+                ->pluck('count', 'status')
+                ->toArray();
+            
+            $completedCount = $statusCounts['completed'] ?? 0;
+            $cancelledCount = $statusCounts['cancelled'] ?? 0;
+            $scheduledCount = $statusCounts['scheduled'] ?? 0;
+            $confirmedCount = $statusCounts['confirmed'] ?? 0;
+            $totalAppointments = array_sum($statusCounts);
+
             $totalClients = User::where('role', 'client')->count();
             $totalStaff = User::where('role', 'staff')->count();
-            
-            $completedCount = Appointment::where('status', 'completed')->count();
-            $cancelledCount = Appointment::where('status', 'cancelled')->count();
-            $scheduledCount = Appointment::where('status', 'scheduled')->count();
-            $confirmedCount = Appointment::where('status', 'confirmed')->count();
             
             $recentAppointments = Appointment::with(['client', 'staff'])
                 ->orderBy('start_time', 'desc')

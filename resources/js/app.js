@@ -10,7 +10,9 @@ import CommandSearch from './components/CommandSearch.vue';
 const app = createApp({
     data() {
         return {
-            currentUser: null
+            currentUser: null,
+            isResettingDemo: false,
+            isLoggingOut: false
         };
     },
     created() {
@@ -29,14 +31,33 @@ const app = createApp({
                 this.currentUser = null;
             }
         },
+        resetDemoData() {
+            if (this.isResettingDemo) return;
+            if (confirm('Are you sure you want to reset the demo workspace? All created contacts, deals, and bookings will be wiped and recreated.')) {
+                this.isResettingDemo = true;
+                axios.post('/api/demo/reset')
+                    .then(response => {
+                        this.isResettingDemo = false;
+                        alert('Demo workspace data has been successfully reset!');
+                        window.location.reload();
+                    })
+                    .catch(error => {
+                        this.isResettingDemo = false;
+                        alert('Failed to reset demo workspace: ' + (error.response?.data?.message || error.message));
+                    });
+            }
+        },
         getInitials(name) {
             if (!name) return 'A';
             return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
         },
         logout() {
+            this.isLoggingOut = true;
             axios.post('/api/logout')
                 .then(() => {
-                    this.clearSession();
+                    setTimeout(() => {
+                        this.clearSession();
+                    }, 800);
                 })
                 .catch(() => {
                     this.clearSession();
@@ -46,7 +67,7 @@ const app = createApp({
             localStorage.removeItem('auth');
             localStorage.removeItem('user');
             this.currentUser = null;
-            router.push({ name: 'login' });
+            window.location.href = '/login';
         }
     },
     watch: {

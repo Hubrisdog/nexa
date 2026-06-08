@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Appointment;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Helpers\Demo;
 
 class OutlookCalendarService
 {
@@ -26,6 +27,10 @@ class OutlookCalendarService
      */
     public function syncAppointment(Appointment $appointment, $action = 'create')
     {
+        if (Demo::active()) {
+            return Demo::mock('outlook_calendar_sync', compact('appointment', 'action'));
+        }
+
         if (!$this->isEnabled) {
             Log::info("Outlook Calendar Sync [MOCK]: Action '{$action}' successfully executed for Appointment #{$appointment->id} ('{$appointment->title}'). Scheduled time: {$appointment->start_time}. Mock Microsoft Teams link created: https://teams.microsoft.com/l/meetup-join/nexa-{$appointment->id}-teams");
             return [

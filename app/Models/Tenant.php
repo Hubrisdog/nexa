@@ -21,6 +21,11 @@ class Tenant extends Model
         'custom_domain',
         'custom_email_footer',
         'booking_page_theme',
+        'is_demo',
+    ];
+
+    protected $casts = [
+        'is_demo' => 'boolean',
     ];
 
     public function users()

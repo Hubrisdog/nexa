@@ -52,10 +52,17 @@ class CrmController extends Controller
 
     public function storeDeal(Request $request, \App\Services\AiService $aiService)
     {
+        $user = auth()->user();
         $fields = $request->validate([
             'title' => ['required', 'string', 'max:255'],
-            'company_id' => ['nullable', 'exists:companies,id'],
-            'contact_id' => ['nullable', 'exists:contacts,id'],
+            'company_id' => [
+                'nullable',
+                Rule::exists('companies', 'id')->where('tenant_id', $user->tenant_id)
+            ],
+            'contact_id' => [
+                'nullable',
+                Rule::exists('contacts', 'id')->where('tenant_id', $user->tenant_id)
+            ],
             'value' => ['required', 'numeric', 'min:0'],
             'stage' => ['required', Rule::in(['cold', 'contacted', 'interested', 'booked', 'closed_won', 'closed_lost'])],
             'score' => ['nullable', 'integer', 'min:0', 'max:100'],
@@ -131,8 +138,12 @@ class CrmController extends Controller
 
     public function storeContact(Request $request)
     {
+        $user = auth()->user();
         $fields = $request->validate([
-            'company_id' => ['nullable', 'exists:companies,id'],
+            'company_id' => [
+                'nullable',
+                Rule::exists('companies', 'id')->where('tenant_id', $user->tenant_id)
+            ],
             'name' => ['required', 'string', 'max:255'],
             'position' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'string', 'max:255'],
@@ -161,9 +172,16 @@ class CrmController extends Controller
 
     public function storeActivity(Request $request)
     {
+        $user = auth()->user();
         $fields = $request->validate([
-            'company_id' => ['nullable', 'exists:companies,id'],
-            'contact_id' => ['nullable', 'exists:contacts,id'],
+            'company_id' => [
+                'nullable',
+                Rule::exists('companies', 'id')->where('tenant_id', $user->tenant_id)
+            ],
+            'contact_id' => [
+                'nullable',
+                Rule::exists('contacts', 'id')->where('tenant_id', $user->tenant_id)
+            ],
             'type' => ['required', Rule::in(['call', 'email', 'note', 'meeting'])],
             'description' => ['required', 'string'],
         ]);

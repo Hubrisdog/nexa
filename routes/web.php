@@ -37,6 +37,10 @@ Route::get('/api/public/workspace', [PublicBookingController::class, 'getWorkspa
 // OAuth API Callback Routes
 Route::get('/api/oauth/google/callback', [OAuthController::class, 'googleCallback'])->name('oauth.google.callback');
 
+// Demo Mode Routes (Public)
+Route::get('/demo', [DemoController::class, 'autoLoginDemo']);
+Route::get('/demo/oauth/google', [DemoController::class, 'googleConsentScreen']);
+
 // Protected API Routes (Requires web session authentication)
 Route::middleware('auth')->group(function () {
     Route::post('/api/logout', [AuthController::class, 'logout']);
@@ -96,6 +100,7 @@ Route::middleware('auth')->group(function () {
 
     // Demo Simulation Route
     Route::post('/api/demo/simulate', [DemoController::class, 'runSimulation']);
+    Route::post('/api/demo/reset', [DemoController::class, 'resetDemoData']);
 });
 
 // Public Stripe Webhook Route

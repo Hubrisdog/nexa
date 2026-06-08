@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Helpers\Demo;
 
 class WhatsAppService
 {
@@ -23,6 +24,10 @@ class WhatsAppService
      */
     public function sendMessage($recipient, $body)
     {
+        if (Demo::active()) {
+            return Demo::mock('whatsapp_send', compact('recipient', 'body'));
+        }
+
         if (!$this->isEnabled) {
             Log::info("WhatsApp Outbox [MOCK]: Recipient '{$recipient}' successfully notified. Content: \"{$body}\"");
             return [

@@ -6,6 +6,7 @@ use App\Models\Deal;
 use App\Models\Appointment;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Helpers\Demo;
 
 class AiService
 {
@@ -23,6 +24,10 @@ class AiService
      */
     public function scoreLead(Deal $deal): int
     {
+        if (Demo::active()) {
+            return Demo::mock('ai_score_lead', compact('deal'));
+        }
+
         if (!$this->isEnabled) {
             // Algorithmic fallback score
             $score = 50; // base score
@@ -114,6 +119,10 @@ class AiService
      */
     public function summarizeMeeting(Appointment $appointment, $notes = ''): array
     {
+        if (Demo::active()) {
+            return Demo::mock('ai_summarize', compact('appointment'));
+        }
+
         $inputNotes = $notes ?: $appointment->note ?: 'No notes provided.';
 
         if (!$this->isEnabled) {

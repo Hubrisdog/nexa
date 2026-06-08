@@ -270,7 +270,7 @@ onMounted(() => {
                                     <label class="form-label mb-2">Automated Notifications</label>
                                     <div class="switch-container">
                                         <div>
-                                            <span class="font-weight-bold d-block text-sm" style="color: #0f172a;">Booking Confirmations</span>
+                                            <span class="font-weight-bold d-block text-sm" style="color: var(--text-primary);">Booking Confirmations</span>
                                             <span class="text-muted small">Send automatic email notifications to clients when scheduling updates occur.</span>
                                         </div>
                                         <label class="switch">
@@ -281,29 +281,28 @@ onMounted(() => {
                                 </div>
                             </div>
 
-                            <!-- Tab: Billing -->
                             <div v-if="activeTab === 'billing'" class="tab-body">
                                 <div v-if="tenant" class="mb-4">
-                                    <div class="p-3 bg-light rounded-lg mb-4 border border-light d-flex justify-content-between align-items-center" style="border-radius: 12px;">
+                                    <div class="p-3 rounded-lg mb-4 border d-flex justify-content-between align-items-center" style="border-radius: 12px; background-color: var(--bg-dark-hover); border-color: var(--border-dark) !important;">
                                         <div>
                                             <span class="text-xs uppercase text-muted font-weight-bold block">Current Organization Plan</span>
-                                            <span class="font-weight-extrabold text-indigo uppercase" style="font-size: 18px; color: #4f46e5; font-family: 'Inter', sans-serif;">{{ tenant.plan }} Plan</span>
+                                            <span class="font-weight-extrabold text-indigo uppercase" style="font-size: 18px; color: var(--primary-color); font-family: 'Inter', sans-serif;">{{ tenant.plan }} Plan</span>
                                         </div>
                                         <span class="badge badge-success px-3 py-1.5 rounded-pill" style="font-size: 11px; border-radius: 12px; background-color: #10b981; color: white;">{{ tenant.subscription_status?.toUpperCase() || 'ACTIVE' }}</span>
                                     </div>
 
-                                    <h6 class="font-weight-bold text-slate-700 mb-3" style="color: #334155; font-size: 14px;">Upgrade or Manage Subscriptions</h6>
+                                    <h6 class="font-weight-bold mb-3" style="color: var(--text-secondary); font-size: 14px;">Upgrade or Manage Subscriptions</h6>
                                     <div class="row">
                                         <div class="col-md-4 mb-3">
-                                            <div class="card p-3 text-center border rounded-lg h-100 d-flex flex-column justify-content-between" :style="tenant.plan === 'free' ? 'border-color: #4f46e5 !important; box-shadow: 0 4px 6px rgba(79,70,229,0.08);' : ''" style="border-radius: 12px;">
+                                            <div class="card p-3 text-center border rounded-lg h-100 d-flex flex-column justify-content-between" :style="tenant.plan === 'free' ? 'border-color: var(--primary-color) !important; box-shadow: 0 4px 6px rgba(99,102,241,0.08);' : ''" style="border-radius: 12px;">
                                                 <div>
-                                                    <span class="font-weight-bold d-block text-slate-800" style="font-size: 15px; color: #0f172a;">Starter Free</span>
+                                                    <span class="font-weight-bold d-block" style="font-size: 15px; color: var(--text-primary);">Starter Free</span>
                                                     <span class="text-muted text-xs d-block mt-1">For single users</span>
-                                                    <h4 class="font-weight-extrabold my-3" style="color: #0f172a; font-size: 24px;">$0<span class="text-xs text-muted font-weight-normal" style="font-size: 12px;">/mo</span></h4>
+                                                    <h4 class="font-weight-extrabold my-3" style="color: var(--text-primary); font-size: 24px;">$0<span class="text-xs text-muted font-weight-normal" style="font-size: 12px;">/mo</span></h4>
                                                     <ul class="list-unstyled text-xs text-muted text-left mb-4" style="font-size: 12px; padding-left: 0; list-style: none;">
-                                                        <li class="mb-1"><i class="fas fa-check text-indigo mr-1" style="color:#4f46e5;"></i> 1 Provider Sync</li>
-                                                        <li class="mb-1"><i class="fas fa-check text-indigo mr-1" style="color:#4f46e5;"></i> Basic Reminders</li>
-                                                        <li class="mb-1"><i class="fas fa-check text-indigo mr-1" style="color:#4f46e5;"></i> Nexa Booking Page</li>
+                                                        <li class="mb-1"><i class="fas fa-check text-indigo mr-1" style="color:var(--primary-color);"></i> 1 Provider Sync</li>
+                                                        <li class="mb-1"><i class="fas fa-check text-indigo mr-1" style="color:var(--primary-color);"></i> Basic Reminders</li>
+                                                        <li class="mb-1"><i class="fas fa-check text-indigo mr-1" style="color:var(--primary-color);"></i> Nexa Booking Page</li>
                                                     </ul>
                                                 </div>
                                                 <button type="button" @click="handleUpgradePlan('free')" class="btn btn-sm btn-outline-indigo w-100" :disabled="tenant.plan === 'free' || isUpgrading" style="border-radius: 8px; font-weight: 500; font-size: 12px;">
@@ -313,36 +312,36 @@ onMounted(() => {
                                         </div>
 
                                         <div class="col-md-4 mb-3">
-                                            <div class="card p-3 text-center border rounded-lg h-100 d-flex flex-column justify-content-between" :style="tenant.plan === 'pro' ? 'border-color: #4f46e5 !important; box-shadow: 0 4px 6px rgba(79,70,229,0.08);' : ''" style="border-radius: 12px;">
+                                            <div class="card p-3 text-center border rounded-lg h-100 d-flex flex-column justify-content-between" :style="tenant.plan === 'pro' ? 'border-color: var(--primary-color) !important; box-shadow: 0 4px 6px rgba(99,102,241,0.08);' : ''" style="border-radius: 12px;">
                                                 <div>
-                                                    <span class="font-weight-bold d-block text-slate-800" style="font-size: 15px; color: #0f172a;">Professional Pro</span>
+                                                    <span class="font-weight-bold d-block" style="font-size: 15px; color: var(--text-primary);">Professional Pro</span>
                                                     <span class="text-muted text-xs d-block mt-1">For scaling clinics</span>
-                                                    <h4 class="font-weight-extrabold my-3" style="color: #0f172a; font-size: 24px;">$49<span class="text-xs text-muted font-weight-normal" style="font-size: 12px;">/mo</span></h4>
+                                                    <h4 class="font-weight-extrabold my-3" style="color: var(--text-primary); font-size: 24px;">$49<span class="text-xs text-muted font-weight-normal" style="font-size: 12px;">/mo</span></h4>
                                                     <ul class="list-unstyled text-xs text-muted text-left mb-4" style="font-size: 12px; padding-left: 0; list-style: none;">
-                                                        <li class="mb-1"><i class="fas fa-check text-indigo mr-1" style="color:#4f46e5;"></i> Unlimited Calendars</li>
-                                                        <li class="mb-1"><i class="fas fa-check text-indigo mr-1" style="color:#4f46e5;"></i> Automated Sequences</li>
-                                                        <li class="mb-1"><i class="fas fa-check text-indigo mr-1" style="color:#4f46e5;"></i> Teams/Zoom Links</li>
+                                                        <li class="mb-1"><i class="fas fa-check text-indigo mr-1" style="color:var(--primary-color);"></i> Unlimited Calendars</li>
+                                                        <li class="mb-1"><i class="fas fa-check text-indigo mr-1" style="color:var(--primary-color);"></i> Automated Sequences</li>
+                                                        <li class="mb-1"><i class="fas fa-check text-indigo mr-1" style="color:var(--primary-color);"></i> Teams/Zoom Links</li>
                                                     </ul>
                                                 </div>
-                                                <button type="button" @click="handleUpgradePlan('pro')" class="btn btn-sm btn-indigo w-100" :disabled="tenant.plan === 'pro' || isUpgrading" style="border-radius: 8px; font-weight: 500; font-size: 12px; background-color:#4f46e5; color:white; border:0;">
+                                                <button type="button" @click="handleUpgradePlan('pro')" class="btn btn-sm btn-indigo w-100" :disabled="tenant.plan === 'pro' || isUpgrading" style="border-radius: 8px; font-weight: 500; font-size: 12px; background: var(--primary-gradient); color:white; border:0;">
                                                     {{ tenant.plan === 'pro' ? 'Current Plan' : 'Upgrade to Pro' }}
                                                 </button>
                                             </div>
                                         </div>
 
                                         <div class="col-md-4 mb-3">
-                                            <div class="card p-3 text-center border rounded-lg h-100 d-flex flex-column justify-content-between" :style="tenant.plan === 'enterprise' ? 'border-color: #4f46e5 !important; box-shadow: 0 4px 6px rgba(79,70,229,0.08);' : ''" style="border-radius: 12px;">
+                                            <div class="card p-3 text-center border rounded-lg h-100 d-flex flex-column justify-content-between" :style="tenant.plan === 'enterprise' ? 'border-color: var(--primary-color) !important; box-shadow: 0 4px 6px rgba(99,102,241,0.08);' : ''" style="border-radius: 12px;">
                                                 <div>
-                                                    <span class="font-weight-bold d-block text-slate-800" style="font-size: 15px; color: #0f172a;">Enterprise SaaS</span>
+                                                    <span class="font-weight-bold d-block" style="font-size: 15px; color: var(--text-primary);">Enterprise SaaS</span>
                                                     <span class="text-muted text-xs d-block mt-1">Multi-office scales</span>
-                                                    <h4 class="font-weight-extrabold my-3" style="color: #0f172a; font-size: 24px;">$149<span class="text-xs text-muted font-weight-normal" style="font-size: 12px;">/mo</span></h4>
+                                                    <h4 class="font-weight-extrabold my-3" style="color: var(--text-primary); font-size: 24px;">$149<span class="text-xs text-muted font-weight-normal" style="font-size: 12px;">/mo</span></h4>
                                                     <ul class="list-unstyled text-xs text-muted text-left mb-4" style="font-size: 12px; padding-left: 0; list-style: none;">
-                                                        <li class="mb-1"><i class="fas fa-check text-indigo mr-1" style="color:#4f46e5;"></i> Multi-Tenant Scopes</li>
-                                                        <li class="mb-1"><i class="fas fa-check text-indigo mr-1" style="color:#4f46e5;"></i> Custom WhatsApp APIs</li>
-                                                        <li class="mb-1"><i class="fas fa-check text-indigo mr-1" style="color:#4f46e5;"></i> 24/7 Priority Support</li>
+                                                        <li class="mb-1"><i class="fas fa-check text-indigo mr-1" style="color:var(--primary-color);"></i> Multi-Tenant Scopes</li>
+                                                        <li class="mb-1"><i class="fas fa-check text-indigo mr-1" style="color:var(--primary-color);"></i> Custom WhatsApp APIs</li>
+                                                        <li class="mb-1"><i class="fas fa-check text-indigo mr-1" style="color:var(--primary-color);"></i> 24/7 Priority Support</li>
                                                     </ul>
                                                 </div>
-                                                <button type="button" @click="handleUpgradePlan('enterprise')" class="btn btn-sm btn-indigo w-100" :disabled="tenant.plan === 'enterprise' || isUpgrading" style="border-radius: 8px; font-weight: 500; font-size: 12px; background-color:#4f46e5; color:white; border:0;">
+                                                <button type="button" @click="handleUpgradePlan('enterprise')" class="btn btn-sm btn-indigo w-100" :disabled="tenant.plan === 'enterprise' || isUpgrading" style="border-radius: 8px; font-weight: 500; font-size: 12px; background: var(--primary-gradient); color:white; border:0;">
                                                     {{ tenant.plan === 'enterprise' ? 'Current Plan' : 'Upgrade to Enterprise' }}
                                                 </button>
                                             </div>

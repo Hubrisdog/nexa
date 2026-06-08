@@ -2,6 +2,21 @@
     <div class="min-h-screen d-flex align-items-center justify-content-center py-5 px-3" :style="{ '--primary-color': brandColor, '--primary-rgb': brandRgb, 'background-color': 'var(--bg-dark-accent)', 'color': 'var(--text-primary)' }">
         <div class="card glass-card border-0 p-4 shadow-lg w-100" style="max-width: 820px; border-radius: var(--border-radius-lg);">
             
+            <!-- Demo Mode Alert Banner & Magic Booking Simulator controls -->
+            <div v-if="isDemoMode" class="mb-4 p-3 rounded-lg border d-flex justify-content-between align-items-center flex-wrap gap-2" style="background: rgba(99, 102, 241, 0.08); border-color: rgba(99, 102, 241, 0.25) !important;">
+                <div class="text-left">
+                    <span class="badge badge-indigo text-xs py-1 px-2.5 mr-2 animate-pulse text-white" style="background: var(--primary-color);">SIMULATOR</span>
+                    <span class="text-sm font-weight-bold text-white">Interactive Demo Mode</span>
+                    <p class="text-muted text-xs mb-0 mt-0.5">
+                        {{ magicBookingLogs.length > 0 ? magicBookingLogs[magicBookingLogs.length - 1] : 'Explore B2B CRM pipeline auto-creation and calendar synchronization in real-time.' }}
+                    </p>
+                </div>
+                <button @click="triggerMagicBooking" :disabled="bookingInProgress || magicBookingInProgress" class="btn btn-sm btn-indigo px-3 py-2 d-flex align-items-center gap-2" style="border-radius: 8px; font-weight: 700;">
+                    <i class="fas fa-magic" :class="{ 'fa-spin': magicBookingInProgress }"></i>
+                    <span>{{ magicBookingInProgress ? 'Simulating...' : '⚡ Magic Auto-Fill & Book' }}</span>
+                </button>
+            </div>
+            
             <!-- Loading State -->
             <div v-if="loadingProvider" class="text-center py-5">
                 <i class="fas fa-circle-notch fa-spin fa-2x text-indigo mb-3"></i>
@@ -218,6 +233,68 @@
                 </div>
             </div>
         </div>
+
+        <!-- Floating AI Assistant Chat Widget -->
+        <div v-if="isDemoMode" class="ai-assistant-widget" style="position: fixed; bottom: 30px; right: 30px; z-index: 1000; font-family: sans-serif;">
+            <!-- Floating Chat Icon Trigger -->
+            <button v-if="!showAiChat" @click="showAiChat = true" class="btn btn-primary d-flex align-items-center justify-content-center shadow-lg" style="width: 56px; height: 56px; border-radius: 50%; background: var(--primary-gradient); border: 0; box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4) !important;">
+                <i class="fas fa-robot text-white" style="font-size: 24px;"></i>
+            </button>
+
+            <!-- Chat Container -->
+            <div v-else class="card shadow-2xl border-0" style="width: 360px; height: 480px; background: var(--bg-dark-card); border: 1px solid var(--border-dark) !important; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; animation: slideIn 0.3s ease-out;">
+                <!-- Header -->
+                <div class="p-3 d-flex justify-content-between align-items-center border-bottom" style="background: rgba(99, 102, 241, 0.08); border-color: var(--border-dark) !important;">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="d-flex align-items-center justify-content-center bg-indigo" style="width: 32px; height: 32px; border-radius: 50%;">
+                            <i class="fas fa-robot text-white text-sm"></i>
+                        </div>
+                        <div>
+                            <h6 class="font-weight-extrabold m-0 text-white text-sm">Nexa AI Assistant</h6>
+                            <span class="text-xs text-success font-weight-semibold"><i class="fas fa-circle mr-1" style="font-size: 8px;"></i> Online</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-link text-muted p-0" @click="showAiChat = false" style="font-size: 16px;"><i class="fas fa-times"></i></button>
+                </div>
+
+                <!-- Chat Message Window -->
+                <div class="chat-messages flex-grow-1 p-3 overflow-y-auto" ref="chatMessages" style="background: var(--bg-dark-accent); display: flex; flex-direction: column; gap: 12px; height: 260px;">
+                    <div v-for="(msg, idx) in chatHistory" :key="idx" class="d-flex" :class="msg.sender === 'user' ? 'justify-content-end' : 'justify-content-start'">
+                        <div class="p-2.5 max-w-sm text-sm" :style="msg.sender === 'user' ? 'background: var(--primary-color); color: white; border-radius: 12px 12px 0 12px;' : 'background: var(--bg-dark-hover); color: var(--text-primary); border-radius: 12px 12px 12px 0; border: 1px solid var(--border-dark);'">
+                            <span v-if="msg.loading"><i class="fas fa-spinner fa-spin mr-1"></i> Thinking...</span>
+                            <span v-else>{{ msg.text }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Suggestions / Predefined Quick Options -->
+                <div v-if="!aiProcessing" class="px-3 py-2 border-top" style="border-color: var(--border-dark) !important; background: rgba(9, 13, 22, 0.4) !important;">
+                    <span class="text-xs text-muted font-weight-bold d-block mb-1.5">Quick Actions:</span>
+                    <div class="d-flex flex-wrap gap-1.5">
+                        <button 
+                            type="button"
+                            v-for="opt in chatSuggestions" 
+                            :key="opt.text" 
+                            @click="executeAiSuggestion(opt)" 
+                            class="btn btn-xs btn-outline-indigo py-1 px-2" 
+                            style="font-size: 11px; border-radius: 6px; text-align: left;"
+                        >
+                            {{ opt.label }}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Input Form -->
+                <div class="p-2 border-top" style="border-color: var(--border-dark) !important; background: var(--bg-dark-card);">
+                    <form @submit.prevent="submitChatMessage" class="d-flex gap-2">
+                        <input type="text" v-model="chatInput" placeholder="Ask Nexa Assistant..." class="form-control form-control-sm form-control-modern flex-grow-1" :disabled="aiProcessing" style="border-radius: 8px; font-size: 13px;" />
+                        <button type="submit" class="btn btn-sm btn-indigo" :disabled="aiProcessing || !chatInput.trim()" style="border-radius: 8px; width: 38px; height: 38px; padding: 0;">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -262,7 +339,21 @@ export default {
             bookingSuccess: false,
             bookedAppointment: null,
             bookingEmail: '',
-            clientTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+            clientTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+            // Simulator additions
+            magicBookingInProgress: false,
+            magicBookingLogs: [],
+            showAiChat: false,
+            chatInput: '',
+            aiProcessing: false,
+            chatHistory: [
+                { sender: 'ai', text: 'Hi! I am the Nexa AI booking coordinator. In this demo workspace, you can ask me to find slots and schedule appointments using natural language prompts.' }
+            ],
+            chatSuggestions: [
+                { label: 'Book Jane Smith on Tuesday', text: 'Book Jane Smith next Tuesday' },
+                { label: 'Schedule John Doe in the morning', text: 'Schedule John Doe next Monday morning' },
+                { label: 'Book Sarah Johnson tomorrow', text: 'Book Sarah Johnson tomorrow' }
+            ]
         };
     },
     computed: {
@@ -293,6 +384,9 @@ export default {
             
             const dates = formatUTC(this.bookedAppointment.start_time) + '/' + formatUTC(this.bookedAppointment.end_time);
             return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}&location=${location}`;
+        },
+        isDemoMode() {
+            return this.branding?.slug === 'demo' || this.branding?.is_demo || this.provider?.tenant?.is_demo || this.provider?.tenant?.slug === 'demo';
         }
     },
     created() {
@@ -442,6 +536,201 @@ export default {
             if (!dateStr) return '';
             const d = new Date(dateStr);
             return d.toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        },
+        async triggerMagicBooking() {
+            this.magicBookingInProgress = true;
+            this.magicBookingLogs = [];
+            
+            try {
+                if (!this.selectedDate) {
+                    this.magicBookingLogs.push("Selecting date...");
+                    const tomorrow = new Date();
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    const year = tomorrow.getFullYear();
+                    const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+                    const day = String(tomorrow.getDate()).padStart(2, '0');
+                    this.selectedDate = `${year}-${month}-${day}`;
+                    
+                    this.magicBookingLogs.push(`Date selected: ${this.selectedDate}. Fetching slots...`);
+                    await this.fetchSlots();
+                } else if (this.slots.length === 0) {
+                    this.magicBookingLogs.push("Fetching slots...");
+                    await this.fetchSlots();
+                }
+                
+                const slot = this.slots.find(s => s.available);
+                if (!slot) {
+                    this.magicBookingLogs.push("No slots available on this date. Trying next day...");
+                    const nextDay = new Date(this.selectedDate);
+                    nextDay.setDate(nextDay.getDate() + 1);
+                    const year = nextDay.getFullYear();
+                    const month = String(nextDay.getMonth() + 1).padStart(2, '0');
+                    const day = String(nextDay.getDate()).padStart(2, '0');
+                    this.selectedDate = `${year}-${month}-${day}`;
+                    await this.fetchSlots();
+                    const slot2 = this.slots.find(s => s.available);
+                    if (!slot2) {
+                        alert("Could not find any available slot to simulate booking. Please select another date manually.");
+                        this.magicBookingInProgress = false;
+                        return;
+                    }
+                    this.selectedSlot = slot2;
+                } else {
+                    this.selectedSlot = slot;
+                }
+                
+                this.magicBookingLogs.push(`Selected slot: ${this.selectedSlot.time_label}`);
+                this.step = 2;
+                
+                const profiles = [
+                    { name: 'Sarah Connor', email: 'sarah.connor@skynet.demo', company: 'Skynet Solutions', notes: 'Urgent meeting to discuss system automation scopes and neural net integrations.' },
+                    { name: 'Bruce Wayne', email: 'bruce@wayne.demo', company: 'Wayne Enterprises', notes: 'Licensing discussion for custom defense tech, tactical armor specifications.' },
+                    { name: 'Tony Stark', email: 'tony@stark.demo', company: 'Stark Industries', notes: 'Scoping B2B integration sync with Arc Reactor database endpoints.' },
+                    { name: 'Miles Dyson', email: 'miles.dyson@cyberdyne.demo', company: 'Cyberdyne Systems', notes: 'Reviewing database scaling models for deep learning servers.' },
+                    { name: 'Rachael Deckard', email: 'rachael@tyrell.demo', company: 'Tyrell Corp', notes: 'Discovery session on biotech supply chain tracking APIs.' }
+                ];
+                const profile = profiles[Math.floor(Math.random() * profiles.length)];
+                
+                this.magicBookingLogs.push(`Generating client profile: ${profile.name} (${profile.company})...`);
+                this.form.name = profile.name;
+                this.form.email = profile.email;
+                this.form.notes = `[Simulation Company: ${profile.company}] ${profile.notes}`;
+                
+                await new Promise(resolve => setTimeout(resolve, 1200));
+                
+                this.magicBookingLogs.push("Submitting booking, syncing calendar, and generating CRM deal...");
+                await this.submitBooking();
+                
+            } catch (err) {
+                console.error("Magic booking failed:", err);
+                alert("Simulator encountered an error: " + err.message);
+            } finally {
+                this.magicBookingInProgress = false;
+                this.magicBookingLogs = [];
+            }
+        },
+        executeAiSuggestion(opt) {
+            this.chatInput = opt.text;
+            this.submitChatMessage();
+        },
+        async submitChatMessage() {
+            if (!this.chatInput.trim() || this.aiProcessing) return;
+            const input = this.chatInput;
+            this.chatInput = '';
+            
+            this.chatHistory.push({ sender: 'user', text: input });
+            this.scrollToBottom();
+            
+            this.aiProcessing = true;
+            const aiMsg = { sender: 'ai', text: '', loading: true };
+            this.chatHistory.push(aiMsg);
+            
+            try {
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                let foundStaff = null;
+                const lowerInput = input.toLowerCase();
+                
+                if (lowerInput.includes('jane') || lowerInput.includes('smith')) {
+                    foundStaff = this.providers.find(p => p.name.toLowerCase().includes('jane') || p.name.toLowerCase().includes('smith'));
+                } else if (lowerInput.includes('john') || lowerInput.includes('doe')) {
+                    foundStaff = this.providers.find(p => p.name.toLowerCase().includes('john') || p.name.toLowerCase().includes('doe'));
+                } else if (lowerInput.includes('sarah') || lowerInput.includes('johnson')) {
+                    foundStaff = this.providers.find(p => p.name.toLowerCase().includes('sarah') || p.name.toLowerCase().includes('johnson'));
+                }
+                
+                let targetDate = new Date();
+                let dateLabel = 'today';
+                
+                if (lowerInput.includes('tomorrow')) {
+                    targetDate.setDate(targetDate.getDate() + 1);
+                    dateLabel = 'tomorrow';
+                } else if (lowerInput.includes('tuesday')) {
+                    const currentDay = targetDate.getDay();
+                    const daysToTuesday = (2 - currentDay + 7) % 7 || 7;
+                    targetDate.setDate(targetDate.getDate() + daysToTuesday);
+                    dateLabel = 'next Tuesday';
+                } else if (lowerInput.includes('monday')) {
+                    const currentDay = targetDate.getDay();
+                    const daysToMonday = (1 - currentDay + 7) % 7 || 7;
+                    targetDate.setDate(targetDate.getDate() + daysToMonday);
+                    dateLabel = 'next Monday';
+                } else {
+                    targetDate.setDate(targetDate.getDate() + 1);
+                    dateLabel = 'tomorrow';
+                }
+                
+                const year = targetDate.getFullYear();
+                const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+                const day = String(targetDate.getDate()).padStart(2, '0');
+                const dateStr = `${year}-${month}-${day}`;
+                
+                aiMsg.loading = false;
+                
+                if (foundStaff) {
+                    aiMsg.text = `Parsing query: Identified staff scheduler: "${foundStaff.name}". Attempting to view availability for ${dateLabel} (${dateStr})...`;
+                    this.scrollToBottom();
+                    
+                    await this.selectProvider(foundStaff);
+                    this.selectedDate = dateStr;
+                    
+                    aiMsg.text = `Selected "${foundStaff.name}". Fetching available timeslots on ${dateStr}...`;
+                    this.scrollToBottom();
+                    
+                    await this.fetchSlots();
+                    
+                    const isMorning = lowerInput.includes('morning');
+                    let slot = null;
+                    if (isMorning) {
+                        slot = this.slots.find(s => s.available && s.time_label.includes('AM'));
+                    }
+                    if (!slot) {
+                        slot = this.slots.find(s => s.available);
+                    }
+                    
+                    if (slot) {
+                        this.selectedSlot = slot;
+                        this.step = 2;
+                        aiMsg.text = `Success! I parsed your request, switched to ${foundStaff.name}'s calendar, and auto-selected the slot at ${slot.time_label} for ${dateStr}. Please complete your details in the booking form!`;
+                    } else {
+                        aiMsg.text = `I found Dr. ${foundStaff.name}'s schedule, but there are no available slots left on ${dateStr}. Please try another date manually in the calendar wizard.`;
+                    }
+                } else {
+                    if (!this.provider || !this.provider.id) {
+                        aiMsg.text = "I couldn't identify which staff member you want to book with. Please select one from the team list first!";
+                    } else {
+                        this.selectedDate = dateStr;
+                        aiMsg.text = `Searching availability for ${this.provider.name} on ${dateLabel} (${dateStr})...`;
+                        this.scrollToBottom();
+                        
+                        await this.fetchSlots();
+                        
+                        const slot = this.slots.find(s => s.available);
+                        if (slot) {
+                            this.selectedSlot = slot;
+                            this.step = 2;
+                            aiMsg.text = `Success! I resolved your request and auto-selected ${slot.time_label} on ${dateStr} with ${this.provider.name}. Please complete the details form to finish booking!`;
+                        } else {
+                            aiMsg.text = `No slots are available with ${this.provider.name} on ${dateStr}. Please select another date manually.`;
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("AI booking parsing failed:", err);
+                aiMsg.loading = false;
+                aiMsg.text = "Sorry, I ran into an error processing your query. Please pick your slots manually.";
+            } finally {
+                this.aiProcessing = false;
+                this.scrollToBottom();
+            }
+        },
+        scrollToBottom() {
+            this.$nextTick(() => {
+                const el = this.$refs.chatMessages;
+                if (el) {
+                    el.scrollTop = el.scrollHeight;
+                }
+            });
         }
     }
 }
@@ -491,6 +780,28 @@ export default {
     background: transparent;
 }
 .slots-grid::-webkit-scrollbar-thumb {
+    background: var(--border-dark);
+    border-radius: 3px;
+}
+
+@keyframes slideIn {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+.chat-messages::-webkit-scrollbar {
+    width: 6px;
+}
+.chat-messages::-webkit-scrollbar-track {
+    background: transparent;
+}
+.chat-messages::-webkit-scrollbar-thumb {
     background: var(--border-dark);
     border-radius: 3px;
 }

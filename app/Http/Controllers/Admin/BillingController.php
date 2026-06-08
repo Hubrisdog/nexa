@@ -7,6 +7,7 @@ use App\Models\Tenant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
+use App\Helpers\Demo;
 
 class BillingController extends Controller
 {
@@ -41,6 +42,17 @@ class BillingController extends Controller
             'plan' => ['required', Rule::in(['free', 'pro', 'enterprise'])]
         ]);
 
+        if (Demo::active()) {
+            $mockData = Demo::mock('stripe_subscribe', ['plan' => $fields['plan']]);
+            $tenant->update([
+                'plan' => $mockData['plan'],
+                'stripe_customer_id' => $mockData['stripe_customer_id'],
+                'stripe_subscription_id' => $mockData['stripe_subscription_id'],
+                'subscription_status' => $mockData['subscription_status']
+            ]);
+            return response()->json($tenant);
+        }
+
         // Simulating Stripe Customer Session or Billing Portal
         $tenant->update([
             'plan' => $fields['plan'],
@@ -59,6 +71,10 @@ class BillingController extends Controller
      */
     public function stripeWebhook(Request $request)
     {
+        if (Demo::active()) {
+            return response()->json(['status' => 'success', 'message' => 'Demo mode - webhook ignored.']);
+        }
+
         $payload = $request->all();
         $eventType = $payload['type'] ?? '';
 

@@ -305,9 +305,9 @@ const handleDealDrop = async (e, stageKey) => {
     <div class="content px-3 pb-5">
         <!-- Filter and Summary Bar -->
         <div class="mb-4 d-flex justify-content-between align-items-center p-3 border border-dark rounded-xl" style="background-color: var(--bg-dark-card); border-color: var(--border-dark) !important;">
-            <div class="d-flex align-items-center" style="flex-grow: 1; max-width: 400px; position: relative;">
-                <i class="fas fa-search text-muted" style="position: absolute; left: 14px;"></i>
-                <input v-model="searchQuery" type="text" placeholder="Search deals, companies, contacts..." class="form-control pl-5 border-0 w-100" style="background-color: var(--bg-dark-hover) !important; color: var(--text-primary); border-radius: 8px; font-size: 14px; min-height: 40px; outline: none;" />
+            <div class="input-group-custom" style="max-width: 400px;">
+                <span class="input-icon"><i class="fas fa-search text-muted"></i></span>
+                <input v-model="searchQuery" type="text" placeholder="Search deals, companies, contacts..." class="form-control-custom" />
             </div>
             <div class="text-right d-none d-md-block">
                 <span class="text-muted text-xs uppercase tracking-wider block font-semibold" style="font-size: 10px;">Total Pipeline Value</span>

@@ -57,13 +57,216 @@ const triggerToast = (msg) => {
     }, 4000);
 };
 
-const startDay = () => {
-    if (stats.value.today_appointments.length > 0) {
-        const firstApp = stats.value.today_appointments[0];
-        triggerToast(`Starting your day! Your first appointment is with ${firstApp.client?.name || 'Client'} at ${formatTime(firstApp.start_time)}.`);
-    } else {
-        triggerToast("No appointments scheduled for today! Use your shareable link to book new clients.");
+const showStartDayModal = ref(false);
+const currentStep = ref(1);
+const isSimStepLoading = ref(false);
+const simStepProgress = ref(0);
+const simStepLogs = ref([]);
+const simStepSummary = ref('');
+const demoDeals = ref([]);
+const simFinished = ref(false);
+
+const getStepTitle = (step) => {
+    switch (step) {
+        case 1: return 'Stark Arc Reactor Integration Sync';
+        case 2: return 'Wayne Tactical Gear Licensing Review';
+        case 3: return 'Cyberdyne CPU Architecture Sync';
+        default: return '';
     }
+};
+
+const getStepIcon = (step) => {
+    switch (step) {
+        case 1: return 'fas fa-video';
+        case 2: return 'fas fa-shield-alt';
+        case 3: return 'fas fa-microchip';
+        default: return '';
+    }
+};
+
+const getStepSub = (step) => {
+    switch (step) {
+        case 1: return 'Conduct Stark Meeting & Auto-Generate AI Notes';
+        case 2: return 'Check-In Wayne Deal & Update Appointment Status';
+        case 3: return 'Complete Cyberdyne Sync & Advance CRM Stage';
+        default: return '';
+    }
+};
+
+const getStepDesc = (step) => {
+    switch (step) {
+        case 1: return 'Simulates conducting the meeting, updating Google Calendar status to completed, auto-generating AI summaries and moving the deal to Closed Won.';
+        case 2: return 'Updates the appointment status to confirmed, moves the Wayne Enterprises deal to proposal/interested stage, and triggers notification sync.';
+        case 3: return 'Completes the final scheduled appointment for the day, updates the Cyberdyne deal stage, and logs the day-end review.';
+        default: return '';
+    }
+};
+
+const startDay = async () => {
+    const isDemo = currentUser.value?.tenant?.is_demo || currentUser.value?.tenant_id === 999;
+    if (!isDemo) {
+        if (stats.value.today_appointments.length > 0) {
+            const firstApp = stats.value.today_appointments[0];
+            triggerToast(`Starting your day! Your first appointment is with ${firstApp.client?.name || 'Client'} at ${formatTime(firstApp.start_time)}.`);
+        } else {
+            triggerToast("No appointments scheduled for today! Use your shareable link to book new clients.");
+        }
+        return;
+    }
+
+    showStartDayModal.value = true;
+    currentStep.value = 1;
+    simStepProgress.value = 0;
+    simStepLogs.value = [];
+    simStepSummary.value = '';
+    simFinished.value = false;
+
+    try {
+        const response = await axios.get('/api/crm/pipeline');
+        demoDeals.value = response.data;
+    } catch (err) {
+        console.error("Failed to load demo deals:", err);
+    }
+};
+
+const executeSimulationStep = () => {
+    isSimStepLoading.value = true;
+    simStepProgress.value = 0;
+    simStepLogs.value = [];
+    
+    let progress = 0;
+    const interval = setInterval(async () => {
+        progress += 5;
+        simStepProgress.value = progress;
+        
+        if (currentStep.value === 1) {
+            if (progress === 10) simStepLogs.value.push('[10:00 AM] Connecting to secure Google Meet room: nexa-demo-stark...');
+            if (progress === 30) simStepLogs.value.push('[10:05 AM] Connection established. Pepper Potts (CEO, Stark Industries) joined.');
+            if (progress === 50) simStepLogs.value.push('[10:15 AM] Meeting in progress: Discussed arc reactor B2B pipeline integrations.');
+            if (progress === 70) simStepLogs.value.push('[10:25 AM] Running Nexa AI Summarizer to parse transcripts and generate insights...');
+            if (progress === 90) {
+                simStepLogs.value.push('[10:28 AM] AI Meeting summary generated and synced to CRM timeline!');
+                simStepSummary.value = 'Pepper Potts approved the integrations document. We discussed moving forward with the enterprise contract immediately.';
+            }
+        } else if (currentStep.value === 2) {
+            if (progress === 10) simStepLogs.value.push('[1:00 PM] Initiating calendar sync check for: Wayne Tactical Gear Licensing Review...');
+            if (progress === 40) simStepLogs.value.push('[1:10 PM] Checking with staff member regarding availability update.');
+            if (progress === 75) simStepLogs.value.push('[1:20 PM] Client Lucius Fox requested proposal draft; updating deal stage to Interested.');
+            if (progress === 90) simStepLogs.value.push('[1:25 PM] Synced Outlook/Google Calendar invitation with updated Confirmed status.');
+        } else if (currentStep.value === 3) {
+            if (progress === 10) simStepLogs.value.push('[3:30 PM] Connecting to Cyberdyne CPU Architecture Sync...');
+            if (progress === 35) simStepLogs.value.push('[3:40 PM] Reviewing B2B CRM pipeline stages with Lead Architect Miles Dyson.');
+            if (progress === 60) simStepLogs.value.push('[3:50 PM] Syncing final appointment status to Completed.');
+            if (progress === 85) simStepLogs.value.push('[4:00 PM] Logging final meeting notes in database. Closing daily analytics funnels...');
+        }
+        
+        if (progress >= 100) {
+            clearInterval(interval);
+            
+            try {
+                if (currentStep.value === 1) {
+                    const app = stats.value.today_appointments.find(a => a.title.includes('Stark') || (a.client && a.client.name.includes('Pepper')));
+                    if (app) {
+                        simStepLogs.value.push(`[Database] Updating Appointment #${app.id} status to 'completed'...`);
+                        await axios.put(`/api/appointments/${app.id}`, {
+                            client_id: app.client_id,
+                            staff_id: app.staff_id,
+                            title: app.title,
+                            start_time: app.start_time,
+                            end_time: app.end_time,
+                            status: 'completed',
+                            note: (app.note || '') + '\n[AI Summary]: Concluded successfully. Pepper Potts approved integration specifications.',
+                            calendar_provider: app.calendar_provider || 'google'
+                        });
+                        simStepLogs.value.push('[Database] Appointment status updated successfully.');
+                    }
+                    
+                    const deal = demoDeals.value.find(d => d.title.includes('Stark') || (d.company && d.company.name.includes('Stark')));
+                    if (deal) {
+                        simStepLogs.value.push(`[Database] Moving Deal #${deal.id} stage to 'closed_won'...`);
+                        await axios.put(`/api/crm/deals/${deal.id}/stage`, {
+                            stage: 'closed_won'
+                        });
+                        simStepLogs.value.push('[Database] Deal stage updated to Closed Won.');
+                    }
+                } else if (currentStep.value === 2) {
+                    const app = stats.value.today_appointments.find(a => a.title.includes('Wayne') || (a.client && a.client.name.includes('Lucius')));
+                    if (app) {
+                        simStepLogs.value.push(`[Database] Updating Appointment #${app.id} status to 'confirmed'...`);
+                        await axios.put(`/api/appointments/${app.id}`, {
+                            client_id: app.client_id,
+                            staff_id: app.staff_id,
+                            title: app.title,
+                            start_time: app.start_time,
+                            end_time: app.end_time,
+                            status: 'confirmed',
+                            note: app.note,
+                            calendar_provider: app.calendar_provider || 'google'
+                        });
+                        simStepLogs.value.push('[Database] Appointment status updated to Confirmed.');
+                    }
+                    
+                    const deal = demoDeals.value.find(d => d.title.includes('Wayne') || (d.company && d.company.name.includes('Wayne')));
+                    if (deal) {
+                        simStepLogs.value.push(`[Database] Moving Deal #${deal.id} stage to 'interested'...`);
+                        await axios.put(`/api/crm/deals/${deal.id}/stage`, {
+                            stage: 'interested'
+                        });
+                        simStepLogs.value.push('[Database] Deal stage updated to Interested.');
+                    }
+                } else if (currentStep.value === 3) {
+                    const app = stats.value.today_appointments.find(a => a.title.includes('Cyberdyne') || (a.client && a.client.name.includes('Miles')));
+                    if (app) {
+                        simStepLogs.value.push(`[Database] Updating Appointment #${app.id} status to 'completed'...`);
+                        await axios.put(`/api/appointments/${app.id}`, {
+                            client_id: app.client_id,
+                            staff_id: app.staff_id,
+                            title: app.title,
+                            start_time: app.start_time,
+                            end_time: app.end_time,
+                            status: 'completed',
+                            note: app.note,
+                            calendar_provider: app.calendar_provider || 'google'
+                        });
+                        simStepLogs.value.push('[Database] Appointment status updated to Completed.');
+                    }
+                    
+                    const deal = demoDeals.value.find(d => d.title.includes('Cyberdyne') || (d.company && d.company.name.includes('Cyberdyne')));
+                    if (deal) {
+                        simStepLogs.value.push(`[Database] Moving Deal #${deal.id} stage to 'booked'...`);
+                        await axios.put(`/api/crm/deals/${deal.id}/stage`, {
+                            stage: 'booked'
+                        });
+                        simStepLogs.value.push('[Database] Deal stage updated to Booked.');
+                    }
+                }
+                
+                simStepLogs.value.push('[System] All background triggers executed. Local database synced successfully!');
+                await fetchStats();
+                
+            } catch (err) {
+                console.error("Error during database simulation:", err);
+                simStepLogs.value.push(`[Error] Simulation API request failed: ${err.message || err}`);
+            } finally {
+                isSimStepLoading.value = false;
+            }
+        }
+    }, 100);
+};
+
+const nextSimulationStep = () => {
+    if (currentStep.value < 3) {
+        currentStep.value++;
+        simStepProgress.value = 0;
+        simStepLogs.value = [];
+        simStepSummary.value = '';
+    } else {
+        simFinished.value = true;
+    }
+};
+
+const closeStartDayModal = () => {
+    showStartDayModal.value = false;
 };
 
 const triggerSimulation = async () => {
@@ -445,6 +648,117 @@ const getStatusClass = (status) => {
     
     <!-- Onboarding Setup Wizard -->
     <onboarding-wizard v-if="showOnboarding" :user="currentUser" @close="showOnboarding = false" />
+
+    <!-- Start Day Simulation Walkthrough Modal (Demo Mode Only) -->
+    <div v-if="showStartDayModal" class="modal-backdrop-blur d-flex align-items-center justify-content-center" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(9, 13, 22, 0.85); backdrop-filter: blur(12px); z-index: 1050; padding: 20px;">
+        <div class="card glass-card border-0 p-4" style="width: 100%; max-width: 650px; background: var(--bg-dark-card); border: 1px solid var(--border-dark) !important; border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+            <!-- Modal Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge px-2.5 py-1" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 6px; font-weight: 700; font-size: 11px;">DEMO MODE</span>
+                    <h4 class="font-weight-extrabold m-0" style="font-size: 20px; color: var(--text-primary); letter-spacing: -0.5px;">
+                        {{ simFinished ? 'Day Successfully Completed!' : 'Start Day Walkthrough Simulator' }}
+                    </h4>
+                </div>
+                <button v-if="!isSimStepLoading" class="btn btn-link text-muted p-0" @click="closeStartDayModal" style="font-size: 18px;"><i class="fas fa-times"></i></button>
+            </div>
+
+            <!-- Walkthrough Body (Active Step) -->
+            <div v-if="!simFinished">
+                <!-- Step Indicator / Progress bar -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-xs font-weight-bold" style="color: var(--text-secondary);">STEP {{ currentStep }} OF 3: {{ getStepTitle(currentStep) }}</span>
+                        <span class="text-xs text-indigo font-weight-bold">{{ simStepProgress }}% Complete</span>
+                    </div>
+                    <div class="progress-bar-container" style="height: 6px; background: rgba(255, 255, 255, 0.05); border-radius: 3px; overflow: hidden; position: relative;">
+                        <div class="progress-bar-fill" :style="{ width: simStepProgress + '%' }" style="height: 100%; background: var(--primary-gradient); transition: width 0.1s linear; border-radius: 3px;"></div>
+                    </div>
+                </div>
+
+                <!-- Step Description Details -->
+                <div class="p-3 mb-4 d-flex align-items-center gap-3" style="background: var(--bg-dark-hover); border-radius: 12px; border: 1px solid var(--border-dark);">
+                    <div class="step-icon-wrapper d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; border-radius: 10px; background: rgba(99, 102, 241, 0.1); color: var(--primary-color); font-size: 20px;">
+                        <i :class="getStepIcon(currentStep)"></i>
+                    </div>
+                    <div>
+                        <h6 class="font-weight-bold mb-1" style="color: var(--text-primary); font-size: 14.5px;">{{ getStepSub(currentStep) }}</h6>
+                        <p class="text-muted text-xs mb-0">{{ getStepDesc(currentStep) }}</p>
+                    </div>
+                </div>
+
+                <!-- Simulation Output Terminal -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-xs font-weight-bold" style="color: var(--text-secondary);"><i class="fas fa-terminal mr-1 text-muted"></i> Simulation Console Logs</span>
+                        <span v-if="isSimStepLoading" class="text-xs text-muted"><i class="fas fa-spinner fa-spin mr-1"></i> Running pipeline...</span>
+                    </div>
+                    <div class="terminal-window p-3" style="background: #090d16; border-radius: 12px; border: 1px solid var(--border-dark); height: 160px; overflow-y: auto; font-family: 'Courier New', Courier, monospace; font-size: 12px; line-height: 1.6; color: #34d399;">
+                        <div v-for="(log, idx) in simStepLogs" :key="idx" class="terminal-line">
+                            <span class="text-muted mr-1.5">&gt;</span> {{ log }}
+                        </div>
+                        <div v-if="simStepLogs.length === 0" class="text-muted text-center py-4">
+                            Click "Run Simulation Step" to run database updates, sync calendar, and trigger AI workflows.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Meeting Summary Output Box (Visible after completion of Step 1) -->
+                <div v-if="currentStep === 1 && simStepProgress === 100 && simStepSummary" class="p-3 mb-4" style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 12px;">
+                    <div class="d-flex align-items-center gap-2 mb-2 text-success" style="font-weight: 700; font-size: 13px;">
+                        <i class="fas fa-brain"></i> AI Meeting Summary Sync
+                    </div>
+                    <p class="text-sm mb-0" style="color: var(--text-primary); line-height: 1.45; font-style: italic;">
+                        "{{ simStepSummary }}"
+                    </p>
+                </div>
+
+                <!-- Walkthrough Actions -->
+                <div class="d-flex justify-content-end gap-2">
+                    <button class="btn btn-outline-secondary" :disabled="isSimStepLoading" @click="closeStartDayModal" style="border-radius: 10px; font-weight: 600;">Cancel</button>
+                    <button class="btn btn-primary d-flex align-items-center gap-2" :disabled="isSimStepLoading || simStepProgress === 100" @click="executeSimulationStep" style="border-radius: 10px; font-weight: 700; background: var(--primary-gradient); border: 0;">
+                        <i v-if="isSimStepLoading" class="fas fa-spinner fa-spin"></i>
+                        <i v-else class="fas fa-play"></i>
+                        <span>{{ isSimStepLoading ? 'Executing Database Queries...' : 'Run Simulation Step' }}</span>
+                    </button>
+                    <button v-if="simStepProgress === 100" class="btn btn-indigo" @click="nextSimulationStep" style="border-radius: 10px; font-weight: 700;">
+                        <span>Next Step <i class="fas fa-arrow-right ml-1"></i></span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Walkthrough Success Completion Page -->
+            <div v-else class="text-center py-4">
+                <div class="success-ring mb-4 mx-auto d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; border-radius: 50%; background: rgba(16, 185, 129, 0.15); border: 2px solid var(--accent-color); color: var(--accent-color); font-size: 36px;">
+                    <i class="fas fa-check-double"></i>
+                </div>
+                <h5 class="font-weight-extrabold mb-2" style="font-size: 22px; color: var(--text-primary);">All Demo Steps Completed!</h5>
+                <p class="text-muted text-sm max-w-md mx-auto mb-4">
+                    The walkthrough simulated real database state updates for your morning schedule, synced to calendars, auto-graded leads, and moved CRM opportunities.
+                </p>
+
+                <!-- Simulated Summary Metrics -->
+                <div class="row g-3 mb-4 mx-auto" style="max-width: 500px;">
+                    <div class="col-6">
+                        <div class="p-3 text-center" style="background: var(--bg-dark-hover); border-radius: 12px; border: 1px solid var(--border-dark);">
+                            <span class="d-block text-xs text-muted mb-1">Appointments Handled</span>
+                            <span class="font-weight-extrabold text-indigo" style="font-size: 20px;">3 / 3 Completed</span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 text-center" style="background: var(--bg-dark-hover); border-radius: 12px; border: 1px solid var(--border-dark);">
+                            <span class="d-block text-xs text-muted mb-1">Deals Closed/Advanced</span>
+                            <span class="font-weight-extrabold text-success" style="font-size: 20px;">$250,000</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary px-4 py-2" @click="closeStartDayModal" style="border-radius: 10px; font-weight: 700; background: var(--primary-gradient); border: 0;">
+                    Return to Dashboard
+                </button>
+            </div>
+        </div>
+    </div>
 </template>
 
 <style scoped>
@@ -497,4 +811,36 @@ const getStatusClass = (status) => {
 .bg-pink { background-color: #ec4899; }
 .bg-orange { background-color: #f97316; }
 .bg-blue { background-color: #3b82f6; }
+
+.modal-backdrop-blur {
+    animation: fadeIn 0.25s ease-out forwards;
+}
+.progress-bar-fill {
+    transition: width 0.1s linear;
+}
+.terminal-window::-webkit-scrollbar {
+    width: 6px;
+}
+.terminal-window::-webkit-scrollbar-track {
+    background: transparent;
+}
+.terminal-window::-webkit-scrollbar-thumb {
+    background: #1f2937;
+    border-radius: 3px;
+}
+.terminal-window::-webkit-scrollbar-thumb:hover {
+    background: #374151;
+}
+@keyframes fadeIn {
+    from { opacity: 0; backdrop-filter: blur(0px); }
+    to { opacity: 1; backdrop-filter: blur(12px); }
+}
+@keyframes scaleUp {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+.success-ring {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+    animation: scaleUp 0.3s ease-out;
+}
 </style>

@@ -99,6 +99,15 @@ const routes = [
     }
 ];
 
+// Sync session details from window.NexaUser once on full page load
+if (window.NexaUser) {
+    localStorage.setItem('auth', 'true');
+    localStorage.setItem('user', JSON.stringify(window.NexaUser));
+} else if (window.NexaUser === null) {
+    localStorage.removeItem('auth');
+    localStorage.removeItem('user');
+}
+
 let router = createRouter({
     history: createWebHistory(),
     routes,

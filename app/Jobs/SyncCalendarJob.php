@@ -24,6 +24,8 @@ class SyncCalendarJob implements ShouldQueue
     protected $startTime;
     protected $endTime;
     protected $action;
+    protected $staffId;
+    protected $clientId;
 
     /**
      * Create a new job instance.
@@ -41,6 +43,8 @@ class SyncCalendarJob implements ShouldQueue
             $this->note = $appointment->note;
             $this->startTime = $appointment->start_time;
             $this->endTime = $appointment->end_time;
+            $this->staffId = $appointment->staff_id;
+            $this->clientId = $appointment->client_id;
         } else {
             $this->appointmentId = $appointment['id'] ?? null;
             $this->googleEventId = $appointment['google_event_id'] ?? null;
@@ -50,6 +54,8 @@ class SyncCalendarJob implements ShouldQueue
             $this->note = $appointment['note'] ?? '';
             $this->startTime = $appointment['start_time'] ?? null;
             $this->endTime = $appointment['end_time'] ?? null;
+            $this->staffId = $appointment['staff_id'] ?? null;
+            $this->clientId = $appointment['client_id'] ?? null;
         }
     }
 
@@ -70,6 +76,8 @@ class SyncCalendarJob implements ShouldQueue
         $appointment->google_event_id = $this->googleEventId;
         $appointment->outlook_event_id = $this->outlookEventId;
         $appointment->calendar_provider = $this->calendarProvider;
+        $appointment->staff_id = $this->staffId;
+        $appointment->client_id = $this->clientId;
 
         // Perform synchronization
         if ($this->calendarProvider === 'google') {
