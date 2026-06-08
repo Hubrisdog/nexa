@@ -2,6 +2,15 @@
 
 // Check if running on Vercel
 if (getenv('VERCEL') === '1' || getenv('APP_ENV') === 'production') {
+    // Dynamically resolve APP_URL from request headers to prevent http://localhost fallbacks
+    $proto = isset($_SERVER['HTTP_X_FORWARDED_PROTO']) ? $_SERVER['HTTP_X_FORWARDED_PROTO'] : 'https';
+    $host = isset($_SERVER['HTTP_X_FORWARDED_HOST']) ? $_SERVER['HTTP_X_FORWARDED_HOST'] : (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost');
+    $appUrl = "{$proto}://{$host}";
+    
+    putenv("APP_URL={$appUrl}");
+    $_ENV['APP_URL'] = $appUrl;
+    $_SERVER['APP_URL'] = $appUrl;
+
     $targetDb = '/tmp/database.sqlite';
     $sourceDb = __DIR__ . '/../database/database.sqlite';
     
