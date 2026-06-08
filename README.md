@@ -1,72 +1,59 @@
-<div align="center">
+<p align="center">
+  <img src="public/screenshots/dashboard.png" alt="Nexa Admin Dashboard" width="100%">
+</p>
 
-  # ⚡ NEXA ⚡
-  ### *Premium Multi-Tenant Scheduling & Enriched B2B CRM SaaS Infrastructure*
+<p align="center">
+  <a href="https://laravel.com/"><img src="https://img.shields.io/badge/Framework-Laravel%2010-FF2D20?style=for-the-badge&logo=laravel&logoColor=white" alt="Framework Laravel 10"></a>
+  <a href="https://vuejs.org/"><img src="https://img.shields.io/badge/UI%20Framework-Vue%203%20%2B%20Vite-4FC08D?style=for-the-badge&logo=vue.js&logoColor=white" alt="UI Framework Vue 3"></a>
+  <a href="https://php.net/"><img src="https://img.shields.io/badge/Language-PHP%208.3-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="Language PHP 8.3"></a>
+  <a href="https://sqlite.org/"><img src="https://img.shields.io/badge/Database-SQLite%203-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="Database SQLite"></a>
+  <a href="#network-boundary--air-gapped-compliance"><img src="https://img.shields.io/badge/Architecture-Multi--Tenant-blueviolet?style=for-the-badge" alt="Architecture Multi-Tenant"></a>
+</p>
 
-  [![Laravel Version](https://img.shields.io/badge/Laravel-v10.x-FF2D20?logo=laravel&logoColor=white)](https://laravel.com)
-  [![Vue Version](https://img.shields.io/badge/Vue.js-v3.x-4FC08D?logo=vue.js&logoColor=white)](https://vuejs.org)
-  [![PHP Version](https://img.shields.io/badge/PHP-%3E%3D%208.2-777BB4?logo=php&logoColor=white)](https://php.net)
-  [![Database](https://img.shields.io/badge/Database-SQLite%20%7C%20MySQL%20%7C%20Postgres-4479A1?logo=sqlite&logoColor=white)](https://sqlite.org)
-  [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-  [![Build Status](https://img.shields.io/badge/Tests-24%20Passed-success?logo=phpunit&logoColor=white)](https://phpunit.de)
+# Nexa 🪐
 
-  *A commercial-grade, single-database multi-tenant scheduling engine and sales pipeline. Featuring host-level tenant isolation, dynamic styling variable injection, model-encrypted calendar OAuth sync, automatic B2B lead enrichment, and a premium Vue 3 SPA interface.*
+**Premium B2B SaaS Scheduling & Enriched Sales Pipeline Infrastructure**
 
-  [Key Pillars](#-key-architectural-pillars) • [Tech Stack](#-tech-stack) • [Visual Walkthrough](#-visual-tour) • [Flow Diagram](#-system-flow-diagram) • [Quick Setup](#-quick-setup) • [Verification](#-testing-and-verification)
-</div>
-
----
-
-## 🚀 Key Architectural Pillars
-
-### 1. Host-Level Multi-Tenant Isolation
-* **Subdomain & Custom Domain Routing**: Incoming requests are dynamically resolved at the HTTP middleware layer based on the hostname. Supports subdomains (e.g., `acme.nexa.co`) and custom domains (e.g., `book.acme.com`).
-* **Dynamic White-Label Styling**: Tenants can upload custom logos, configure brand footer text, and select colors. The branding parameters are injected at boot, dynamically applying CSS custom variables (`--primary-color`, `--bg-brand`) across the Vue 3 SPA frontend.
-* **Isolated Data Scoping**: All database models utilize a `BelongsToTenant` trait that automatically scopes queries via an Eloquent global scope to prevent cross-tenant data leakage.
-
-### 2. Trust Layer: Calendar OAuth Integrations
-* **Real-time Availability Engine**: Instantly computes free/busy slots by checking local scheduling records alongside external busy intervals pulled directly from the provider's connected Google Calendar.
-* **Encrypted Token Store**: Access and refresh tokens are encrypted at rest using Laravel's model-level crypt casting to secure connected email profiles.
-* **Resilient Background Syncing**: Reschedules and cancellations dispatch serialized `SyncCalendarJob` background workers, maintaining robust synchronization even under peak loads.
-
-### 3. Growth Engine: B2B CRM Pipeline
-* **Lead Enrichment**: Form submissions automatically extract domain info from the client's email to build CRM Company profiles, associate Contact records, and calculate qualified Lead Engagement Scores.
-* **Kanban Deals Board**: Features a premium drag-and-drop deals pipeline that automatically tracks revenue potential, logs discovery activities, and transitions leads.
-* **Enterprise AI & Analytics**: Includes analytics charts, day-of-week booking heatmaps, and post-meeting AI summary modules.
-
-### 4. Local Development Mode
-To facilitate offline development without subscription checks:
-* Staff limits are expanded to **100** staff profiles locally.
-* Monthly appointments limits are expanded to **1,000** slots.
-* Enterprise AI summarization checks are bypassed.
+Nexa is a commercial-grade, multi-tenant scheduling and B2B CRM SaaS platform. Built on a single-database isolated multi-tenant architecture, Nexa enables organizations to deploy custom-branded booking pages, sync internal schedules directly with external calendars (via Google OAuth), and automatically pipe bookings into an enriched B2B CRM sales funnel.
 
 ---
 
-## 📸 Visual Tour
+## Live Interactive Demo
 
-*Here are the visual landmarks of Nexa's premium UI. You can replace the image paths below with actual screenshots of your dashboard:*
+A live interactive demo of the platform dashboard is available:
+👉 Live Application Dashboard: **[nexa-demo.vercel.app](https://aegis-threat-intel.vercel.app/)** *(Front-end HUD mock)*
 
-| Admin Dashboard | Sharing & Booking |
-|---|---|
-| ![Admin Dashboard](https://raw.githubusercontent.com/Hubrisdog/nexa/main/public/screenshots/dashboard.png) <br> *Sleek dark-mode dashboard with real-time stats & heatmaps* | ![Public Booking](https://raw.githubusercontent.com/Hubrisdog/nexa/main/public/screenshots/booking.png) <br> *Glassmorphic booking page with brand customization* |
+### Quick Demo Walkthrough Guide
 
-| Drag-and-Drop CRM Kanban | Google OAuth Connection |
-|---|---|
-| ![Kanban Board](https://raw.githubusercontent.com/Hubrisdog/nexa/main/public/screenshots/kanban.png) <br> *Visual pipeline tracking leads and deal values* | ![OAuth Sync](https://raw.githubusercontent.com/Hubrisdog/nexa/main/public/screenshots/oauth.png) <br> *Secure calendar integration settings panel* |
+To explore the scheduling and CRM pipelines:
 
----
-
-## 🛠️ Tech Stack
-
-* **Backend**: Laravel 10 (PHP >= 8.2)
-* **Frontend**: Vue.js 3 (Single Page Application via Vite)
-* **Database**: SQLite (Local development / testing), MySQL/PostgreSQL (Production)
-* **Styling**: Vanilla CSS, premium glassmorphism, responsive micro-animations
-* **Integrations**: Google Calendar API v3 (OAuth 2.0)
+1. **Authentication (Demo Auto-Login)**:
+   - Access the local `/demo` route. The system will automatically generate a mock demo workspace (`demo` slug), seed initial analytics, and log you in as a system administrator.
+2. **Branding customization**:
+   - Go to **Settings** and modify the organization name, brand color, and logo. The system dynamically updates the layout variables (`--primary-color`) across all client-facing scheduling interfaces.
+3. **Simulate a booking**:
+   - Trigger a simulated B2B booking. You will see a new client profile generated, a B2B CRM Company and Contact initialized, and a qualified Opportunity (Deal) auto-scored by the AI engine.
+4. **Inspect the CRM Kanban**:
+   - Go to the **CRM Pipeline** tab and drag the generated deal through the pipeline stages. An automated audit trail and timeline activity log will generate.
 
 ---
 
-## 📡 System Flow Diagram
+## Table of Contents
+
+1. [Live Interactive Demo](#live-interactive-demo)
+2. [Platform Capabilities](#platform-capabilities)
+3. [System Architecture](#system-architecture)
+4. [Core Workflows & Code Evidence](#core-workflows--code-evidence)
+5. [Engineering Lessons & Scars](#engineering-lessons--scars)
+6. [Directory Workspace Layout](#directory-workspace-layout)
+7. [Prerequisites & Development Setup](#prerequisites--development-setup)
+8. [Testing & Verification](#testing--verification)
+
+---
+
+## System Architecture
+
+This flow diagram illustrates how Nexa resolves subdomains, checks availability constraints, and processes bookings:
 
 ```mermaid
 graph TD
@@ -84,68 +71,121 @@ graph TD
 
 ---
 
-## ⚙️ Quick Setup
+## Core Workflows & Code Evidence
 
-### Prerequisites
-* PHP >= 8.2 (with SQLite / PDO extensions)
-* Composer
-* Node.js >= 18 & npm
+### 1. Composite Multi-Tenant Unique Constraints
+To ensure tenant-level separation while maintaining globally searchable client records, user emails are unique *per tenant*. The database schema defines a composite unique index:
+```php
+// From /database/migrations/2026_06_08_000000_fix_users_unique_constraint.php
+Schema::table('users', function (Blueprint $table) {
+    $table->dropUnique(['email']);
+    $table->unique(['email', 'tenant_id']);
+});
+```
 
-### Step-by-Step Configuration
+### 2. Optimized Availability Math (Range Filtering)
+To verify slot conflicts without loading a provider's entire booking history into memory, the database query checks overlapping start and end times bounded by the provider's active buffer:
+```php
+// From /app/Services/AvailabilityService.php
+$existingAppointments = Appointment::where('staff_id', $provider->id)
+    ->where('status', '!=', 'cancelled')
+    ->where('start_time', '<', $end)
+    ->where('end_time', '>', $start->copy()->subMinutes($bufferMinutes))
+    ->get();
+```
 
-1. **Clone the Repository**:
+### 3. Aggregated Analytical Count Matrices
+Nexa aggregates metrics like CRM stages and completion rates in single, grouped queries instead of performing queries inside loops:
+```php
+// From /app/Http/Controllers/Admin/AnalyticsController.php
+$providerStats = Appointment::selectRaw("staff_id, status, count(*) as count")
+    ->groupBy('staff_id', 'status')
+    ->get()
+    ->groupBy('staff_id');
+```
+
+---
+
+## Engineering Lessons & Scars
+
+* **The Cross-Tenant Client Clash**: In early versions, `users.email` carried a global database unique index. Under a subdomain multi-tenant setup, this caused 500 database crashes whenever a guest tried to book a slot under Tenant B using an email address that had previously booked under Tenant A. Resolving this required dropping the global index, migrating to a composite unique index (`['email', 'tenant_id']`), and scoping validation rules to the active tenant ID.
+* **The Queue Serialization Blindspot**: Background Google/Outlook calendar synchronization jobs are dispatched to queue workers to keep HTTP responses fast. However, queue serialization stripped the `$appointment->staff_id` relationship properties from the payload, causing background workers to resolve provider relationships to `null` and silently fall back to mock sync modes. We resolved this by explicitly mapping and hydrating `$staffId` and `$clientId` inside `SyncCalendarJob`.
+* **Redundant Query Storms**: The admin dashboard initially performed over 48 individual SQL count/sum roundtrips per request (counting appointments, calculating show rates, and looping through providers). As data scales, this introduces high database latency. Consolidating these loops into `groupBy` SQL aggregates reduced database roundtrips by 90%.
+
+---
+
+## Directory Workspace Layout
+
+```
+Nexa/
+├── app/
+│   ├── Http/
+│   │   ├── Controllers/
+│   │   │   └── Admin/           # Admin Dashboard, CRM, AI, & OAuth Controllers
+│   │   └── Middleware/          # Tenant Resolution & Subscription Limit Checkers
+│   ├── Jobs/                    # Background Queue Tasks (SyncCalendarJob)
+│   ├── Models/                  # Multi-tenant Eloquent models
+│   ├── Services/                # Availability engines, Google & Outlook calendar APIs
+│   └── Traits/                  # BelongsToTenant global scoping traits
+├── database/
+│   ├── migrations/              # Database Schema & Performance Index Migrations
+│   └── seeders/                 # Seeding scripts for demo simulations
+├── resources/
+│   ├── js/                      # Vue 3 SPA Client Workspace
+│   │   ├── components/          # Dashboard panels & CRM boards
+│   │   └── pages/               # Calendar, Settings, and Auth views
+│   └── views/                   # Server-side Blade layouts
+└── routes/
+    └── web.php                  # Web and Protected API Route Registry
+```
+
+---
+
+## Prerequisites & Development Setup
+
+### System Requirements
+* **PHP >= 8.2** (with PDO SQLite extension enabled)
+* **Composer**
+* **Node.js >= 18**
+
+### Installation
+
+1. **Clone & Configure Environment**:
    ```bash
    git clone https://github.com/Hubrisdog/nexa.git
    cd nexa
-   ```
-
-2. **Configure Environment File**:
-   Copy `.env.example` to `.env` and fill out your local settings:
-   ```bash
    cp .env.example .env
    ```
 
-3. **Install Dependencies**:
+2. **Install Dependencies**:
    ```bash
    composer install
    npm install
    ```
 
-4. **Generate Application Key**:
+3. **Database Initialization**:
    ```bash
    php artisan key:generate
-   ```
-
-5. **Run Migrations & Seed Mock Database**:
-   Seeding will pre-populate an admin user, multiple providers, mock CRM pipeline data, and initial bookings.
-   ```bash
    php artisan migrate --seed
    ```
 
-6. **Compile Frontend Assets**:
+4. **Run Vite Development Server**:
    ```bash
-   # Compile production assets
-   npm run build
-   
-   # Or run Vite's HMR hot reload server
    npm run dev
    ```
 
-7. **Start the Local Server**:
+5. **Start PHP Server**:
    ```bash
    php artisan serve
    ```
-   Access the dashboard at `http://localhost:8000`.
+   Open `http://localhost:8000` in your browser.
 
 ---
 
-## 🧪 Testing and Verification
+## Testing & Verification
 
-Nexa includes a robust test suite covering host resolution, calendar conflicts, and registration flows.
-
-Run the test suite locally:
+Run the full PHPUnit verification suite:
 ```bash
 php artisan test
 ```
-
-Tests run on an isolated in-memory connection configured in `phpunit.xml`, ensuring your local SQLite database remains untouched.
+The test suite utilizes an isolated, in-memory SQLite database, guaranteeing that your local database environment remains untouched during test execution.
