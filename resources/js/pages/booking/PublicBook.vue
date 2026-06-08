@@ -191,7 +191,63 @@
                         <h5 class="font-weight-bold mb-3 text-white">Select Date</h5>
                         <div class="row">
                             <div class="col-12 mb-3">
-                                <input type="date" class="form-control form-control-modern w-100" v-model="selectedDate" :min="todayDateString" @change="fetchSlots" />
+                                <div class="calendar-container p-3 rounded-lg border mb-3" style="background-color: rgba(9, 13, 22, 0.4); border-color: var(--border-dark) !important; border-radius: 12px;">
+                                    <!-- Calendar Header -->
+                                    <div class="d-flex align-items-center justify-content-between mb-3">
+                                        <h6 class="text-white font-weight-bold mb-0" style="font-size: 14.5px;">{{ monthYearLabel }}</h6>
+                                        <div class="d-flex gap-2">
+                                            <button 
+                                                type="button" 
+                                                class="btn btn-sm btn-icon-only text-muted border border-dark rounded-circle" 
+                                                :disabled="!canPrevMonth"
+                                                @click="prevMonth"
+                                                style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.02); transition: all 0.2s;"
+                                            >
+                                                <i class="fas fa-chevron-left text-xs"></i>
+                                            </button>
+                                            <button 
+                                                type="button" 
+                                                class="btn btn-sm btn-icon-only text-muted border border-dark rounded-circle" 
+                                                @click="nextMonth"
+                                                style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.02); transition: all 0.2s;"
+                                            >
+                                                <i class="fas fa-chevron-right text-xs"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Weekday Labels -->
+                                    <div class="mb-2" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center;">
+                                        <span v-for="day in ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']" :key="day" class="text-muted font-weight-bold text-xs" style="font-size: 11px;">
+                                            {{ day }}
+                                        </span>
+                                    </div>
+
+                                    <!-- Days Grid -->
+                                    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;">
+                                        <div v-for="(cell, index) in daysInMonthGrid" :key="index" class="d-flex align-items-center justify-content-center">
+                                            <!-- Empty cells -->
+                                            <div v-if="!cell.isCurrentMonth" style="width: 100%; aspect-ratio: 1; min-height: 36px;"></div>
+                                            
+                                            <!-- Real days -->
+                                            <button 
+                                                v-else
+                                                type="button"
+                                                class="btn calendar-day-btn w-100 d-flex align-items-center justify-content-center text-sm font-weight-bold"
+                                                :class="{
+                                                    'active-day': selectedDate === cell.dateString,
+                                                    'today-day': isToday(cell.dateString) && selectedDate !== cell.dateString,
+                                                    'disabled-day': cell.disabled
+                                                }"
+                                                :disabled="cell.disabled"
+                                                @click="selectCalendarDate(cell.dateString)"
+                                                style="aspect-ratio: 1; min-height: 36px; border-radius: 8px; font-size: 13px; padding: 0; border: 1px solid transparent; transition: all 0.2s;"
+                                            >
+                                                {{ cell.day }}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         
@@ -375,6 +431,8 @@ export default {
             loadingProvider: true,
             providerError: null,
             selectedDate: '',
+            currentYear: new Date().getFullYear(),
+            currentMonth: new Date().getMonth(),
             slots: [],
             loadingSlots: false,
             selectedSlot: null,
@@ -444,6 +502,77 @@ export default {
         },
         isDemoMode() {
             return this.branding?.slug === 'demo' || this.branding?.is_demo || this.provider?.tenant?.is_demo || this.provider?.tenant?.slug === 'demo';
+        },
+        monthYearLabel() {
+            const date = new Date(this.currentYear, this.currentMonth, 1);
+            return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        },
+        canPrevMonth() {
+            const today = new Date();
+            const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+            const viewMonthStart = new Date(this.currentYear, this.currentMonth, 1);
+            return viewMonthStart > currentMonthStart;
+        },
+        daysInMonthGrid() {
+            const year = this.currentYear;
+            const month = this.currentMonth;
+            
+            // First day of the month
+            const firstDayInstance = new Date(year, month, 1);
+            const startDayOfWeek = firstDayInstance.getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            
+            const grid = [];
+            
+            // Add padding for days of previous month
+            for (let i = 0; i < startDayOfWeek; i++) {
+                grid.push({
+                    day: null,
+                    dateString: null,
+                    disabled: true,
+                    isCurrentMonth: false
+                });
+            }
+            
+            // Add days of current month
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateInstance = new Date(year, month, day);
+                dateInstance.setHours(0, 0, 0, 0);
+                
+                const yyyy = year;
+                const mm = String(month + 1).padStart(2, '0');
+                const dd = String(day).padStart(2, '0');
+                const dateString = `${yyyy}-${mm}-${dd}`;
+                
+                const disabled = dateInstance < today;
+                
+                grid.push({
+                    day,
+                    dateString,
+                    disabled,
+                    isCurrentMonth: true
+                });
+            }
+            
+            return grid;
+        }
+    },
+    watch: {
+        selectedDate(newVal) {
+            if (newVal) {
+                const parts = newVal.split('-');
+                if (parts.length === 3) {
+                    const y = parseInt(parts[0], 10);
+                    const m = parseInt(parts[1], 10) - 1;
+                    if (!isNaN(y) && !isNaN(m)) {
+                        this.currentYear = y;
+                        this.currentMonth = m;
+                    }
+                }
+            }
         }
     },
     created() {
@@ -461,6 +590,34 @@ export default {
         };
     },
     methods: {
+        prevMonth() {
+            if (!this.canPrevMonth) return;
+            if (this.currentMonth === 0) {
+                this.currentMonth = 11;
+                this.currentYear--;
+            } else {
+                this.currentMonth--;
+            }
+        },
+        nextMonth() {
+            if (this.currentMonth === 11) {
+                this.currentMonth = 0;
+                this.currentYear++;
+            } else {
+                this.currentMonth++;
+            }
+        },
+        isToday(dateString) {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            return dateString === `${year}-${month}-${day}`;
+        },
+        selectCalendarDate(dateString) {
+            this.selectedDate = dateString;
+            this.fetchSlots();
+        },
         async initWorkspace() {
             this.loadingProvider = true;
             try {
@@ -907,5 +1064,38 @@ export default {
 .chat-messages::-webkit-scrollbar-thumb {
     background: var(--border-dark);
     border-radius: 3px;
+}
+.calendar-day-btn {
+    background: transparent;
+    color: var(--text-primary);
+}
+.calendar-day-btn:hover:not(:disabled) {
+    background-color: rgba(var(--primary-rgb), 0.15) !important;
+    border-color: rgba(var(--primary-rgb), 0.3) !important;
+    color: var(--primary-color) !important;
+}
+.calendar-day-btn.active-day {
+    background: var(--primary-color) !important;
+    color: #ffffff !important;
+    font-weight: 800;
+    box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.35);
+}
+.calendar-day-btn.today-day {
+    border-color: var(--primary-color) !important;
+    color: var(--primary-color) !important;
+}
+.calendar-day-btn.disabled-day {
+    color: var(--text-secondary) !important;
+    opacity: 0.25 !important;
+    cursor: not-allowed;
+}
+.btn-icon-only:hover:not(:disabled) {
+    background-color: rgba(var(--primary-rgb), 0.1) !important;
+    border-color: var(--primary-color) !important;
+    color: var(--primary-color) !important;
+}
+.btn-icon-only:disabled {
+    opacity: 0.2;
+    cursor: not-allowed;
 }
 </style>
