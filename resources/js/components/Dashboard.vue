@@ -50,7 +50,8 @@ const bookingPageUrl = computed(() => {
     // If host ends with vercel.app
     if (host.endsWith('vercel.app')) {
         if (parts.length === 3) {
-            return `https://${tenant.slug}.${host}`;
+            // Under vercel.app free tier, subdomains like *.vercel.app are not registered, so we use query parameter resolution
+            return `${window.location.protocol}//${host}/?tenant=${tenant.slug}`;
         }
         if (parts.length >= 4) {
             parts[0] = tenant.slug;

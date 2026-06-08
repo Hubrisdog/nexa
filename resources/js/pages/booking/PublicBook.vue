@@ -632,7 +632,11 @@ export default {
                     await this.fetchProvider(this.username);
                 } else {
                     // Unified root workspace resolution
-                    const response = await axios.get('/api/public/workspace');
+                    const params = {};
+                    if (this.$route.query.tenant) {
+                        params.tenant = this.$route.query.tenant;
+                    }
+                    const response = await axios.get('/api/public/workspace', { params });
                     this.branding = response.data.tenant;
                     this.providers = response.data.providers;
 
@@ -653,7 +657,11 @@ export default {
         },
         async fetchProvider(identifier) {
             try {
-                const response = await axios.get(`/api/public/booking/${identifier}`);
+                const params = {};
+                if (this.$route.query.tenant) {
+                    params.tenant = this.$route.query.tenant;
+                }
+                const response = await axios.get(`/api/public/booking/${identifier}`, { params });
                 this.provider = response.data;
                 if (this.provider.tenant) {
                     this.branding = this.provider.tenant;
@@ -701,12 +709,14 @@ export default {
             // Use resolved email/name lookup parameter
             const lookup = this.provider.email || this.username;
             try {
-                const response = await axios.get(`/api/public/booking/${lookup}/slots`, {
-                    params: {
-                        date: this.selectedDate,
-                        timezone: this.clientTimezone
-                    }
-                });
+                const params = {
+                    date: this.selectedDate,
+                    timezone: this.clientTimezone
+                };
+                if (this.$route.query.tenant) {
+                    params.tenant = this.$route.query.tenant;
+                }
+                const response = await axios.get(`/api/public/booking/${lookup}/slots`, { params });
                 this.slots = response.data;
             } catch (err) {
                 console.error("Slots load failed", err);
@@ -730,7 +740,11 @@ export default {
                     notes: this.form.notes,
                     ...this.utmParams
                 };
-                const response = await axios.post('/api/public/book', payload);
+                const params = {};
+                if (this.$route.query.tenant) {
+                    params.tenant = this.$route.query.tenant;
+                }
+                const response = await axios.post('/api/public/book', payload, { params });
                 if (response.data.success) {
                     this.bookingEmail = this.form.email;
                     this.bookedAppointment = response.data.appointment;

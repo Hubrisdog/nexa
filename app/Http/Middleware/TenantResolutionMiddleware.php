@@ -53,7 +53,17 @@ class TenantResolutionMiddleware
             }
         }
 
-        // 3. Bind resolved tenant context to session and request attributes
+        // 3. Fall back to query parameter (useful for Vercel preview iframes)
+        if (!$tenant && $request->has('tenant')) {
+            $tenant = Tenant::where('slug', $request->query('tenant'))->first();
+        }
+
+        // 4. Fall back to session
+        if (!$tenant && session() && session()->has('tenant_id')) {
+            $tenant = Tenant::find(session('tenant_id'));
+        }
+
+        // 5. Bind resolved tenant context to session and request attributes
         if ($tenant) {
             session(['tenant_id' => $tenant->id]);
             $request->attributes->set('tenant', $tenant);

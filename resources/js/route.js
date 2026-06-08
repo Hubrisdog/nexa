@@ -11,7 +11,12 @@ import PublicBook from "./pages/booking/PublicBook.vue";
 import { createRouter, createWebHistory } from "vue-router";
 import axios from "axios";
 
-const isWorkspaceDomain = () => {
+const isWorkspaceDomain = (to) => {
+    // If the URL has a tenant query parameter, treat it as a valid workspace context
+    if (to && to.query && to.query.tenant) {
+        return true;
+    }
+
     const host = window.location.hostname;
     const parts = host.split('.');
     
@@ -129,7 +134,7 @@ router.beforeEach((to, from, next) => {
     }
 
     if (to.path === '/') {
-        if (!isWorkspaceDomain()) {
+        if (!isWorkspaceDomain(to)) {
             next({ name: 'admin.dashboard' });
             return;
         }
