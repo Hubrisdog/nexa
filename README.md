@@ -9,11 +9,48 @@
   <a href="#developer-webhook-infrastructure"><img src="https://img.shields.io/badge/Webhooks-HMAC%20SHA256%20Signed-blue?style=for-the-badge" alt="Webhooks HMAC"></a>
 </p>
 
-# Nexa Scheduler Engine
+# Nexa
 
-**Enterprise-Grade B2B SaaS Scheduling & Enriched Sales Pipeline Infrastructure**
+Multi-tenant scheduling and CRM platform built with Laravel and Vue.
 
-Nexa is a commercial-grade, multi-tenant scheduling and B2B CRM SaaS engine. Built on a single-database isolated multi-tenant architecture, Nexa enables organizations to deploy custom-branded booking pages, sync internal schedules directly with external calendars (via Google OAuth), and automatically pipe bookings into an enriched B2B CRM sales funnel. 
+Nexa allows organizations to create branded booking pages, manage team availability, capture booking attribution data, and track leads through a CRM pipeline. The project explores tenant isolation, scheduling automation, webhook integrations, custom domains, and offline-first client workflows.
+
+## Current Features
+
+* Multi-tenant workspace architecture
+* Public booking pages
+* Team and collective scheduling
+* Workload-based round-robin assignment
+* CRM pipeline with UTM attribution tracking
+* Google Calendar integration
+* HMAC-signed outbound webhooks
+* Custom branding and domain management
+* Offline mutation queue with automatic synchronization
+* Demo workspace provisioning
+
+## Technical Overview
+
+Nexa uses a single-database multi-tenant architecture where application data is scoped by tenant identifiers. Bookings, CRM records, webhook subscriptions, and user accounts are isolated at the application and database layers.
+
+The scheduling engine supports availability checks, provider assignment, and workload-balanced routing. Booking events can trigger outbound webhooks and CRM updates while preserving attribution metadata captured during the booking process.
+
+This repository is currently an active development project and serves as both a learning platform and a foundation for future SaaS experimentation.
+
+## Why I Built This
+
+Most scheduling applications stop at appointment booking.
+
+Nexa explores what happens after a booking is created:
+
+- How should appointments be distributed across a team?
+- How can attribution data be preserved?
+- How can bookings automatically flow into CRM workflows?
+- How can organizations manage branding and domains in a multi-tenant environment?
+
+The project serves as a practical exploration of scheduling systems, CRM workflows, webhook infrastructure, and SaaS architecture using Laravel and Vue.
+
+This single section tells recruiters and engineers what your thinking process was.
+ 
 
 ---
 
@@ -75,11 +112,10 @@ flowchart TD
             RR[Round-Robin Workload Allocator]
         end
 
-        subgraph CRM["💼 B2B CRM Pipeline & Lead Scoring"]
+        subgraph CRM["💼 CRM Pipeline & Attribution"]
             C[Auto-created CRM Company]
             D[Auto-created CRM Contact]
             E[CRM Deal + UTM Attribution]
-            S[AI Lead Scorer]
         end
 
         db[("💾 SQLite Database <br> [Scoped tenant_id Index]")]
@@ -115,7 +151,6 @@ flowchart TD
     RR -->|7. Auto-Sync Profile| C
     RR -->|8. Link Contact| D
     RR -->|9. Write Deal with UTM| E
-    E -->|10. Score Opportunity| S
     
     %% Offline Syncing
     O -->|11. Sequenced Flush when Online| B
@@ -132,7 +167,7 @@ flowchart TD
 
 ---
 
-## Core Technical Specifications
+## Technical Highlights
 
 ### 1. Webhook Signing & HMAC Authentication
 To protect external endpoints against payload injection attacks, Nexa computes an `HMAC SHA256` signature using the webhook's configured secret and attaches it to the `X-Nexa-Signature` header:
@@ -170,7 +205,7 @@ usort($eligibleProviders, function($a, $b) {
 $provider = $eligibleProviders[0]['provider'];
 ```
 
-### 3. Offline Mutation Interceptor Queue
+### 3. Offline Synchronization Queue
 Nexa intercepts data mutations (`POST`, `PUT`, `DELETE`, `PATCH`) on network failure or offline states, serializes them to `localStorage`, and queues them for sequential FIFO syncing when connection returns:
 ```javascript
 // From /resources/js/utils/offlineQueue.js
@@ -186,7 +221,7 @@ export function registerOfflineInterceptor(onOfflineTriggered, onSyncCompleted) 
 }
 ```
 
-### 4. Dynamic Composite Tenancy Constraint
+### 4. Tenant-Aware User Constraints
 To support tenant data scoping without risking duplicate guest emails colliding across organizations, Nexa drops the global database-level index and enforces a composite database-level index:
 ```php
 // From /database/migrations/2026_06_08_000000_fix_users_unique_constraint.php
