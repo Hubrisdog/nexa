@@ -32,6 +32,18 @@
       "dest": "/api/index.php"
     }
   ],
+  "build": {
+    "env": {
+      "APP_ENV": "production",
+      "APP_DEBUG": "true",
+      "APP_KEY": "base64:eOkVlr4qgannCE7Y88mSWLdxm6ZWzY3ZyGGCTj2OIRA=",
+      "DB_CONNECTION": "sqlite",
+      "CACHE_DRIVER": "array",
+      "SESSION_DRIVER": "cookie",
+      "VIEW_COMPILED_PATH": "/tmp",
+      "LOG_CHANNEL": "stderr"
+    }
+  },
   "env": {
     "APP_ENV": "production",
     "APP_DEBUG": "true",
