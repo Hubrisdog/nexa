@@ -703,3 +703,15 @@ body {
 .input-group-custom .form-control-custom.is-invalid {
     border-color: #ef4444 !important;
 }
+
+/* Premium Footer styling matching Nexa Dark Theme */
+.main-footer {
+    background-color: var(--bg-dark-accent) !important;
+    border-top: 1px solid var(--border-dark) !important;
+    color: var(--text-secondary) !important;
+    font-size: 13.0px;
+    padding: 18px 24px !important;
+}
+.main-footer strong {
+    color: var(--text-primary) !important;
+}

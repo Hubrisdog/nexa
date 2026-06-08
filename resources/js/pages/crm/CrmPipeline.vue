@@ -323,8 +323,8 @@ const handleDealDrop = async (e, stageKey) => {
             <div 
                 v-for="stage in stages" 
                 :key="stage.key" 
-                class="kanban-column flex-shrink-0" 
-                style="min-width: 290px; width: 290px; background-color: rgba(17, 24, 39, 0.4); border: 1px solid var(--border-dark); border-radius: 12px; padding: 12px;"
+                class="kanban-column" 
+                style="flex-shrink: 0; min-width: 290px; width: 290px; background-color: rgba(17, 24, 39, 0.4); border: 1px solid var(--border-dark); border-radius: 12px; padding: 12px;"
                 @dragover="handleDealDragOver"
                 @drop="handleDealDrop($event, stage.key)"
             >
