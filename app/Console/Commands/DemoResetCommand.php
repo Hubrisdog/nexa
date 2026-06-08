@@ -37,6 +37,9 @@ class DemoResetCommand extends Command
      */
     public function handle()
     {
+        // Disable tenant scope during seeding/resetting to bypass global scopes
+        config(['app.ignore_tenant_scope' => true]);
+
         $this->info('Starting Demo Workspace reset...');
 
         $tenant = Tenant::where('slug', 'demo')->orWhere('is_demo', true)->first();

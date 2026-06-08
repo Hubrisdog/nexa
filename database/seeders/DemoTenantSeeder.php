@@ -18,6 +18,9 @@ class DemoTenantSeeder extends Seeder
 {
     public function run(): void
     {
+        // Disable tenant scope during seeding to avoid scoping queries
+        config(['app.ignore_tenant_scope' => true]);
+
         // 1. Create or Find Demo Tenant
         $tenant = Tenant::firstOrCreate(
             ['slug' => 'demo'],

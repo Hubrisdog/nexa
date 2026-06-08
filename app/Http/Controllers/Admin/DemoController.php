@@ -167,6 +167,9 @@ class DemoController extends Controller
      */
     public function autoLoginDemo(Request $request)
     {
+        // Disable tenant scope during demo login to resolve any conflicting session state
+        config(['app.ignore_tenant_scope' => true]);
+
         // 1. Create or Find Demo Tenant
         $tenant = Tenant::firstOrCreate(
             ['slug' => 'demo'],

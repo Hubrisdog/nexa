@@ -33,6 +33,10 @@ trait BelongsToTenant
      */
     protected static function resolveTenantId()
     {
+        if (config('app.ignore_tenant_scope') === true) {
+            return null;
+        }
+
         if (static::$resolving) {
             return null;
         }

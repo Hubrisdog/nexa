@@ -232,15 +232,57 @@ body {
 .custom-modal, .activity-drawer, .drawer-right {
     background-color: var(--bg-dark-card) !important;
     border: 1px solid var(--border-dark) !important;
-    border-radius: var(--border-radius-lg) !important;
-    box-shadow: var(--card-shadow) !important;
     color: var(--text-primary) !important;
 }
-.drawer-header, .drawer-footer {
-    border-color: var(--border-dark) !important;
-    background-color: rgba(17, 24, 39, 0.4) !important;
+.drawer-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(3, 7, 18, 0.6) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    z-index: 1040;
 }
-.drawer-backdrop, .custom-modal-overlay {
+.drawer-right {
+    position: fixed;
+    top: 0;
+    right: -480px;
+    width: 480px;
+    max-width: 100%;
+    height: 100vh;
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5) !important;
+    z-index: 1050;
+    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+}
+.drawer-right.open {
+    right: 0 !important;
+}
+.drawer-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-dark) !important;
+    background-color: rgba(17, 24, 39, 0.4) !important;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.drawer-body {
+    padding: 24px;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+.drawer-footer {
+    padding: 20px 24px;
+    border-top: 1px solid var(--border-dark) !important;
+    background-color: rgba(17, 24, 39, 0.4) !important;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+.custom-modal-overlay {
     background: rgba(3, 7, 18, 0.6) !important;
     backdrop-filter: blur(8px) !important;
 }
