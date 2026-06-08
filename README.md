@@ -17,16 +17,18 @@ Nexa allows organizations to create branded booking pages, manage team availabil
 
 ## Current Features
 
-* Multi-tenant workspace architecture
-* Public booking pages
-* Team and collective scheduling
-* Workload-based round-robin assignment
-* CRM pipeline with UTM attribution tracking
-* Google Calendar integration
-* HMAC-signed outbound webhooks
-* Custom branding and domain management
-* Offline mutation queue with automatic synchronization
-* Demo workspace provisioning
+Nexa is a fully functional, production-ready workspace scheduling and sales CRM application. Core capabilities include:
+
+* **Multi-Tenant Workspace Architecture**: Isolated branding, schedules, settings, and users per organization.
+* **Premium Interactive Date Picker**: A polished, custom-designed inline monthly calendar grid that replaces default HTML input pickers.
+* **Team & Collective Scheduling**: Dynamic unions of provider schedules to show unified booking availability slots.
+* **Workload-Balanced Round-Robin Routing**: Distributes appointments dynamically to the staff member with the lowest scheduled meetings count.
+* **CRM Pipeline & UTM Attribution**: Automatically creates company, contact, and opportunity records from bookings while preserving marketing source parameters (`utm_*`).
+* **Google Calendar Synchronization**: Encrypted OAuth credentials connection to automatically sync scheduled meetings.
+* **HMAC-Signed Outbound Webhooks**: Secure webhook subscription pipeline utilizing SHA256 HMAC headers to send real-time events to external developer targets.
+* **Domain & Branding Wizard**: Manage custom domains and dynamically trigger mocked Let's Encrypt SSL edge certificates verification checks.
+* **Offline Resiliency Sync Queue**: Client-side Axios interceptors queue and serialize mutations during connection losses, flushing them sequentially when online.
+* **Autofill Typewriter Simulations**: Built-in interactive simulations showing autofill typing flows on login and schedule views for premium demonstrations.
 
 ## Technical Overview
 
@@ -38,9 +40,7 @@ This repository is currently an active development project and serves as both a 
 
 ## Why I Built This
 
-Most scheduling applications stop at appointment booking.
-
-Nexa explores what happens after a booking is created:
+Most scheduling applications stop at appointment booking. Nexa explores what happens after a booking is created:
 
 - How should appointments be distributed across a team?
 - How can attribution data be preserved?
@@ -49,8 +49,14 @@ Nexa explores what happens after a booking is created:
 
 The project serves as a practical exploration of scheduling systems, CRM workflows, webhook infrastructure, and SaaS architecture using Laravel and Vue.
 
-This single section tells recruiters and engineers what your thinking process was.
- 
+## Future Roadmap
+
+Nexa is actively maintained and designed to support enterprise capabilities. Our roadmap includes:
+
+1. **Multi-Tenant Database Isolation**: Migrate from a single-database scoping paradigm to dedicated, isolated databases per tenant (e.g., using `spatie/laravel-multitenancy`) to meet strict compliance and data protection guidelines.
+2. **Stripe Billing & Subscriptions Checkout**: Integrate subscription cycles and plan configurations to charge tenants based on staff seat counts, webhook quotas, and booking volumes.
+3. **Real-Time Live WebSockets Feed**: Implement Laravel Reverb channels to stream real-time updates directly to the administrator dashboard, providing instant updates for lead stage changes on the CRM Kanban board and timeline feeds.
+4. **Busy Day Tooltips & Availability Indicators**: Add micro-tooltips (e.g., *"3 slots left"*) and crossed-out dates directly to the calendar days in the date picker to guide visitors to high-availability dates.
 
 ---
 
@@ -83,12 +89,13 @@ To explore the scheduling and CRM pipelines:
 ## Table of Contents
 
 1. [Local Demo Walkthrough Guide](#local-demo-walkthrough-guide)
-2. [System Architecture](#system-architecture)
-3. [Core Technical Specifications](#core-technical-specifications)
-4. [Directory Workspace Layout](#directory-workspace-layout)
-5. [Deployment & Architectural Considerations](#deployment--architectural-considerations)
-6. [Prerequisites & Development Setup](#prerequisites--development-setup)
-7. [Testing & Verification](#testing--verification)
+2. [Future Roadmap](#future-roadmap)
+3. [System Architecture](#system-architecture)
+4. [Core Technical Specifications](#core-technical-specifications)
+5. [Directory Workspace Layout](#directory-workspace-layout)
+6. [Deployment & Architectural Considerations](#deployment--architectural-considerations)
+7. [Prerequisites & Development Setup](#prerequisites--development-setup)
+8. [Testing & Verification](#testing--verification)
 
 ---
 
