@@ -2,6 +2,19 @@
     <div class="min-h-screen d-flex align-items-center justify-content-center py-5 px-3" :style="{ '--primary-color': brandColor, '--primary-rgb': brandRgb, 'background-color': 'var(--bg-dark-accent)', 'color': 'var(--text-primary)' }">
         <div class="card glass-card border-0 p-4 shadow-lg w-100" style="max-width: 820px; border-radius: var(--border-radius-lg);">
             
+            <!-- Admin Dashboard Shortcut Banner -->
+            <div v-if="isAuthenticated" class="mb-4 p-3 rounded-lg border d-flex justify-content-between align-items-center flex-wrap gap-2" style="background: rgba(139, 92, 246, 0.08); border-color: rgba(139, 92, 246, 0.25) !important;">
+                <div class="text-left">
+                    <span class="badge text-xs py-1 px-2.5 mr-2 text-white" style="background: var(--primary-color); font-weight: 700; border-radius: 6px;">ADMINISTRATOR</span>
+                    <span class="text-sm font-weight-bold text-white">Logged in as {{ currentUser?.name || 'Admin User' }}</span>
+                    <p class="text-muted text-xs mb-0 mt-0.5">You are viewing your public workspace scheduling page.</p>
+                </div>
+                <router-link to="/admin/dashboard" class="btn btn-sm btn-indigo px-3 py-2 d-flex align-items-center gap-2" style="border-radius: 8px; font-weight: 700; background: var(--primary-color); border: none; font-size: 12.5px;">
+                    <i class="fas fa-cog"></i>
+                    <span>Open Admin Dashboard</span>
+                </router-link>
+            </div>
+            
             <!-- Demo Mode Alert Banner & Magic Booking Simulator controls -->
             <div v-if="isDemoMode" class="mb-4 p-3 rounded-lg border d-flex justify-content-between align-items-center flex-wrap gap-2" style="background: rgba(99, 102, 241, 0.08); border-color: rgba(99, 102, 241, 0.25) !important;">
                 <div class="text-left">
@@ -333,6 +346,15 @@ export default {
     name: 'PublicBook',
     data() {
         return {
+            isAuthenticated: localStorage.getItem('auth') === 'true',
+            currentUser: (() => {
+                try {
+                    const u = localStorage.getItem('user');
+                    return u ? JSON.parse(u) : null;
+                } catch(e) {
+                    return null;
+                }
+            })(),
             username: '',
             provider: {},
             branding: {

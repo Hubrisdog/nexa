@@ -40,7 +40,7 @@
         </div>
 
         <!-- Top Header Navbar -->
-        <nav v-if="$route.name !== 'login' && $route.name !== 'register'" class="main-header navbar navbar-expand navbar-white navbar-light">
+        <nav v-if="$route.meta.auth" class="main-header navbar navbar-expand navbar-white navbar-light">
             <ul class="navbar-nav">
                 <li class="nav-item">
                     <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
@@ -86,7 +86,7 @@
         </nav>
 
         <!-- Sidebar Navigation Menu -->
-        <aside v-if="$route.name !== 'login' && $route.name !== 'register'" class="main-sidebar sidebar-dark-primary elevation-4">
+        <aside v-if="$route.meta.auth" class="main-sidebar sidebar-dark-primary elevation-4">
 
             <router-link to="/admin/dashboard" class="brand-link d-flex align-items-center" style="gap: 10px;">
                 <div class="brand-logo-icon">
@@ -199,12 +199,12 @@
         </aside>
 
         <!-- Main Content Area -->
-        <div :class="{ 'content-wrapper': $route.name !== 'login' && $route.name !== 'register' }">
+        <div :class="{ 'content-wrapper': $route.meta.auth }">
             <router-view></router-view>
         </div>
 
         <!-- Mobile Bottom Navigation (Visible on mobile viewports) -->
-        <div v-if="$route.name !== 'login' && $route.name !== 'register'" class="mobile-bottom-nav">
+        <div v-if="$route.meta.auth" class="mobile-bottom-nav">
             <router-link to="/admin/dashboard" active-class="active" class="mobile-nav-item">
                 <i class="fas fa-tachometer-alt"></i>
                 <span>Dashboard</span>
@@ -237,7 +237,7 @@
         <!-- Command Search overlay component mounted globally -->
         <command-search ref="commandSearch"></command-search>
 
-        <footer v-if="$route.name !== 'login' && $route.name !== 'register'" class="main-footer text-center py-3">
+        <footer v-if="$route.meta.auth" class="main-footer text-center py-3">
             <div class="float-right d-none d-sm-inline">
                 Version 1.0.0
             </div>
