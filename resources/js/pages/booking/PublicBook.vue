@@ -671,11 +671,21 @@ export default {
                 const profile = profiles[Math.floor(Math.random() * profiles.length)];
                 
                 this.magicBookingLogs.push(`Generating client profile: ${profile.name} (${profile.company})...`);
-                this.form.name = profile.name;
-                this.form.email = profile.email;
-                this.form.notes = `[Simulation Company: ${profile.company}] ${profile.notes}`;
                 
-                await new Promise(resolve => setTimeout(resolve, 1200));
+                // Animate typing for name
+                await this.typeText('name', profile.name);
+                
+                // Animate typing for email
+                await this.typeText('email', profile.email);
+                
+                // Show comments text area
+                this.showComments = true;
+                
+                // Animate typing for notes
+                const notesText = `[Simulation Company: ${profile.company}] ${profile.notes}`;
+                await this.typeText('notes', notesText);
+                
+                await new Promise(resolve => setTimeout(resolve, 600));
                 
                 this.magicBookingLogs.push("Submitting booking, syncing calendar, and generating CRM deal...");
                 await this.submitBooking();
@@ -686,6 +696,13 @@ export default {
             } finally {
                 this.magicBookingInProgress = false;
                 this.magicBookingLogs = [];
+            }
+        },
+        async typeText(field, text) {
+            this.form[field] = '';
+            for (let i = 0; i < text.length; i++) {
+                this.form[field] += text[i];
+                await new Promise(resolve => setTimeout(resolve, 15 + Math.random() * 10));
             }
         },
         executeAiSuggestion(opt) {

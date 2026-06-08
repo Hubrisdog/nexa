@@ -34,6 +34,43 @@ const greeting = computed(() => {
     return 'Good evening';
 });
 
+const bookingPageUrl = computed(() => {
+    const tenant = currentUser.value?.tenant;
+    if (!tenant) return '#';
+    
+    // If tenant has a custom domain, use it
+    if (tenant.custom_domain) {
+        return `http://${tenant.custom_domain}`;
+    }
+    
+    const host = window.location.host; // e.g. localhost:8000 or nexa-eight-steel.vercel.app
+    const parts = host.split('.');
+    
+    // If host ends with vercel.app
+    if (host.endsWith('vercel.app')) {
+        if (parts.length === 3) {
+            return `https://${tenant.slug}.${host}`;
+        }
+        if (parts.length >= 4) {
+            parts[0] = tenant.slug;
+            return `https://${parts.join('.')}`;
+        }
+    }
+    
+    // If host is localhost
+    if (host.includes('localhost') || host.includes('127.0.0.1')) {
+        if (parts.length === 1 || (parts.length === 2 && parts[0] === 'localhost')) {
+            return `http://${tenant.slug}.${host}`;
+        }
+        if (parts.length > 1 && parts[0] !== '127') {
+            parts[0] = tenant.slug;
+            return `http://${parts.join('.')}`;
+        }
+    }
+    
+    return `http://${tenant.slug}.${host}`;
+});
+
 const fetchStats = async () => {
     try {
         const response = await axios.get('/api/dashboard-stats');
@@ -473,6 +510,9 @@ const getStatusClass = (status) => {
                     <button @click="router.push('/admin/crm')" class="btn btn-outline-secondary d-flex align-items-center px-4" style="height: 48px; border-radius: 12px; font-weight: 600; gap: 8px;">
                         <i class="fas fa-phone-alt"></i> Call Next Lead
                     </button>
+                    <a :href="bookingPageUrl" target="_blank" class="btn btn-outline-info d-flex align-items-center px-4" style="height: 48px; border-radius: 12px; font-weight: 600; gap: 8px; border-color: var(--primary-color) !important; color: #ffffff; background: rgba(139, 92, 246, 0.1); text-decoration: none;">
+                        <i class="fas fa-external-link-alt text-indigo"></i> View Booking Page
+                    </a>
                 </div>
             </div>
         </div>
